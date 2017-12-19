@@ -3,7 +3,8 @@ import argparse
 import os
 import stat
 import sys
-import subprocess
+from subprocess import call
+from string import replace
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-w", "--workingDir", default = os.path.join("Working_Dir"), help = "Top level of working directory to store the output")
@@ -31,7 +32,8 @@ def main():
     seed = args.seed
 
     # Define and create output directories if not already done so
-    gridpack_name = "alphaD" + str(alpha_D) + "_mZ" + str(m_Z) + "_rinv" + str(r_inv)
+    gridpack_name = "alphaD-" + str(alpha_D) + "_mZ-" + str(m_Z) + "_rinv-" + str(r_inv)
+    gridpack_name = gridpack_name.replace('.','_')
     nested_output = "Output/" + gridpack_name + "/cfg_py"
 
     if not os.path.exists( os.path.join(work_space, nested_output) ):
@@ -41,28 +43,57 @@ def main():
     nEvents = args.nEvents
     nThreads = args.nThreads
 
-    os.chmod("./initialise_cmssw.sh", 0775)
-    subprocess.Popen(["./initialise_cmssw.sh", work_space])
+    call("source /cvmfs/cms.cern.ch/cmsset_default.sh", shell=True)
+    call("export SCRAM_ARCH=slc6_amd64_gcc481", shell=True)
+    if os.path.exists( os.path.join(work_space, "CMSSW_7_1_28/src") ):
+        print "Release CMSSW_7_1_28 already exists"
+    else:
+        os.chdir(work_space)
+        call("scram p CMSSW_7_1_28", shell=True)
+        os.chdir("..")
+
+    os.chdir(work_space + "/CMSSW_7_1_28/src")
+    call("eval `scram runtime -sh`", shell=True)
+    print "Set up CMSSW environment"
+    #os.chmod("./initialise_cmssw.sh", 0775)
+    #call("./initialise_cmssw.sh {0}".format(work_space), shell=True)
 
     cmssw_output_path = "CMSSW_7_1_28/src/Configuration/GenProduction/python"
 
     if not os.path.exists( os.path.join(work_space, cmssw_output_path)):
         print "CMSSW output path doesn't exist. Creating now..."
-        os.makedirs ( os.path.join(work_space, cmssw_output_path) )
+        os.makedirs( os.path.join(work_space, cmssw_output_path) )
 
-    writePyConfig(gridpack_name, work_space, cmssw_output_path, m_Z, alpha_D, r_inv)
+    writeGenSimConfig(gridpack_name, work_space, cmssw_output_path, m_Z, alpha_D, r_inv)
 
+    # Compile
+    os.chdir( os.path.join(work_space, "CMSSW_7_1_28/src") )
+    call("scram b", shell=True)
+
+    call("echo $DBS_CLIENT_CONFIG", shell=True)
+ 
+    call("cmsDriver.py Configuration/GenProduction/python/{0}_GS-fragment.py \
+        --fileout {1}/Output/{0}/file:{0}_{2}_GS.root --mc --eventcontent RAWSIM \
+        --datatier GEN-SIM --conditions MCRUN2_71_V3::All --beamspot Realistic50ns13TeVCollision \
+        --step GEN,SIM -n {3} --python_filename {1}/{4}/{0}_{2}_GS_cfg.py \
+        --customise SLHCUpgradeSimulations/Configuration/postLS1Customs.customisePostLS1 \
+        --magField 38T_PostLS1 --no_exec".format(gridpack_name, work_space, seed, nEvents, nested_output), shell=True)
     
-    # CONTINUE FROM L138 OF set_config.sh
+    # Copy the first 8 lines of the first file and write to the second file
+    call("head -n8 {0}/{1}/{2}_{3}_GS_cfg.py > {0}/{1}/{2}_{3}_GS_cfg_tmp.py".format(work_space, nested_output, gridpack_name, seed), shell=True)
+    
+    writeShitIDontKnowWhatToCall(work_space, nested_output, gridpack_name, seed)
+
+    # CONTINUE FROM L180 OF set_config.sh
 
 
-def writePyConfig(gridpack_name, work_space, cmssw_output_path, m_Z, alpha_D, r_inv):
+def writeGenSimConfig(gridpack_name, work_space, cmssw_output_path, m_Z, alpha_D, r_inv):
     """
     Write the Python config file for sample production with Pythia
     """
     
     configPath = work_space + "/" + cmssw_output_path + "/" + gridpack_name + "_GS-fragment.py"
-    configFile = open(configPath, "w")
+    configFile = open(configPath, "w+")
 
     configFile.write("""
 import FWCore.ParameterSet.Config as cms
@@ -88,7 +119,7 @@ generator = cms.EDFilter(\"Pythia8GeneratorFilter\",
             '4900023:m0 = {0}', #mZprime 
             '4900023:mMax = {1}',
             '4900023:mMin = {2}',
-            '4900023:mWidth=1',
+            '4900023:mWidth = 1',
 
             ##set parameters and masses for HV particles
             '4900211:m0 = 9.9',
@@ -110,8 +141,8 @@ generator = cms.EDFilter(\"Pythia8GeneratorFilter\",
 
             '4900111:oneChannel = 1 {4} 0 4900211 -4900211',
             '4900111:addChannel = 1 {5} 91 1 -1',
-            '4900113:oneChannel = 1 {6} 0 4900213 -4900213',
-            '4900113:addChannel = 1 {7} 91 1 -1',
+            '4900113:oneChannel = 1 {4} 0 4900213 -4900213',
+            '4900113:addChannel = 1 {5} 91 1 -1',
             ),
         parameterSets = cms.vstring(
             'pythia8CommonSettings',
@@ -120,10 +151,52 @@ generator = cms.EDFilter(\"Pythia8GeneratorFilter\",
         )
     )
 )
-    """.format(m_Z, m_Z+1, m_Z-1, alpha_D, r_inv, 1.0-r_inv, r_inv, 1.0-r_inv )
+    """.format(m_Z, m_Z+1, m_Z-1, alpha_D, r_inv, 1.0-r_inv)
     )
-
     configFile.close()
+
+    print "GEN-SIM fragment config written"
+
+
+def writeShitIDontKnowWhatToCall(work_space, nested_output, gridpack_name, seed):
+    
+    configPath = work_space + "/" + nested_output + "/" + "{0}_{1}_GS_cfg_tmp.py".format(gridpack_name, seed)
+    configFile = open(configPath, "a")
+
+    configFile.write("""
+# reset all random numbers to ensure statistically distinct but reproducible jobs
+from IOMC.RandomEngine.RandomServiceHelper import RandomNumberServiceHelper
+randHelper = RandomNumberServiceHelper(process.RandomNumberGeneratorService)
+randHelper.resetSeeds({0})
+
+# genjet/met settings - treat HV mesons as invisible
+_particles = [\"genParticlesForJetsNoMuNoNu\",\"genParticlesForJetsNoNu\",\"genCandidatesForMET\",\"genParticlesForMETAllVisible\"]
+for _prod in _particles:
+    if hasattr(process,_prod):
+        hv = [4900211, 4900213]
+        getattr(process,_prod).ignoreParticleIDs.extend(hv)
+
+if hasattr(process,'recoGenJets') and hasattr(process,'recoAllGenJetsNoNu'):
+    process.recoGenJets += process.recoAllGenJetsNoNu
+    
+if hasattr(process,'genJetParticles') and hasattr(process,'genParticlesForJetsNoNu'):
+    process.genJetParticles += process.genParticlesForJetsNoNu
+    getattr(process,\"RAWSIMoutput\").outputCommands.extend([
+        'keep *_genParticlesForJets_*_*',
+        'keep *_genParticlesForJetsNoNu_*_*',
+    ])
+
+# miniAOD settings
+_pruned = [\"prunedGenParticles\"]
+for _prod in _pruned:
+    if hasattr(process,_prod):
+        # keep HV particles
+        getattr(process,_prod).select.append(\"keep (4900001 <= abs(pdgId) <= 4900991 )\"))
+    """.format(seed)
+    )
+    configFile.close()
+
+    print "Other file written"
 
 
 if __name__ == '__main__':
