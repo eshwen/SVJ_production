@@ -5,13 +5,14 @@ import stat
 import sys
 from subprocess import call
 from string import replace
+import shutil
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-w", "--workingDir", default = os.path.join("Working_Dir"), help = "Top level of working directory to store the output")
 parser.add_argument("-n", "--nEvents", default = 100000, type = int, help = "Number of events to generate")
-parser.add_argument("--alphaD", default = 0.1, type = float, help = "Running dark coupling strength")
-parser.add_argument("--mZ", default = 3000, type = int, help = "Mass of the Z'")
-parser.add_argument("--rInv", default = 0.3, type = float, help = "Fraction of dark matter particles")
+parser.add_argument("--alphaD", default = 0.2, type = float, help = "Running dark coupling strength at 1 TeV")
+parser.add_argument("--mZ", default = 3000, type = int, help = "Mass of the Z' (GeV)")
+parser.add_argument("--rInv", default = 0.3, type = float, help = "Fraction of stable hadrons")
 parser.add_argument("-s", "--seed", default = 0, type = int, help = "Random number generator seed")
 parser.add_argument("--nThreads", default = 1, type = int, help = "Number of threads to execute with")
 
@@ -55,8 +56,6 @@ def main():
     os.chdir(work_space + "/CMSSW_7_1_28/src")
     call("eval `scram runtime -sh`", shell=True)
     print "Set up CMSSW environment"
-    #os.chmod("./initialise_cmssw.sh", 0775)
-    #call("./initialise_cmssw.sh {0}".format(work_space), shell=True)
 
     cmssw_output_path = "CMSSW_7_1_28/src/Configuration/GenProduction/python"
 
@@ -70,6 +69,7 @@ def main():
     os.chdir( os.path.join(work_space, "CMSSW_7_1_28/src") )
     call("scram b", shell=True)
 
+    os.chdir( os.path.join(work_space, "CMSSW_7_1_28/src") )
     call("echo $DBS_CLIENT_CONFIG", shell=True)
  
     call("cmsDriver.py Configuration/GenProduction/python/{0}_GS-fragment.py \
@@ -79,12 +79,19 @@ def main():
         --customise SLHCUpgradeSimulations/Configuration/postLS1Customs.customisePostLS1 \
         --magField 38T_PostLS1 --no_exec".format(gridpack_name, work_space, seed, nEvents, nested_output), shell=True)
     
+    commonStrConfig = "{0}/{1}/{2}_{3}_GS_cfg".format(work_space, nested_output, gridpack_name, seed)
     # Copy the first 8 lines of the first file and write to the second file
-    call("head -n8 {0}/{1}/{2}_{3}_GS_cfg.py > {0}/{1}/{2}_{3}_GS_cfg_tmp.py".format(work_space, nested_output, gridpack_name, seed), shell=True)
+    call("head -n8 {0}.py > {0}_tmp.py".format(commonStrConfig), shell=True)
     
-    writeShitIDontKnowWhatToCall(work_space, nested_output, gridpack_name, seed)
+    writeCmsRunConfig(work_space, nested_output, gridpack_name, seed)
 
-    # CONTINUE FROM L180 OF set_config.sh
+    # Copy the last 8 lines of the first file and append to the second file
+    call("tail -n8 {0}.py >> {0}_tmp.py".format(commonStrConfig), shell=True)
+    
+    os.remove( "{0}.py".format(commonStrConfig) )
+    os.rename(commonStrConfig+"_tmp.py", commonStrConfig+".py")
+    
+    # CONTINUE FROM L189 OF set_config.sh. SEE IF I CAN TIDY UP THE head/tail COMMANDS AND DO THEM IN PYTHON INSTEAD
 
 
 def writeGenSimConfig(gridpack_name, work_space, cmssw_output_path, m_Z, alpha_D, r_inv):
@@ -158,7 +165,7 @@ generator = cms.EDFilter(\"Pythia8GeneratorFilter\",
     print "GEN-SIM fragment config written"
 
 
-def writeShitIDontKnowWhatToCall(work_space, nested_output, gridpack_name, seed):
+def writeCmsRunConfig(work_space, nested_output, gridpack_name, seed):
     
     configPath = work_space + "/" + nested_output + "/" + "{0}_{1}_GS_cfg_tmp.py".format(gridpack_name, seed)
     configFile = open(configPath, "a")
@@ -196,7 +203,7 @@ for _prod in _pruned:
     )
     configFile.close()
 
-    print "Other file written"
+    print "cmsRun config file appended"
 
 
 if __name__ == '__main__':
