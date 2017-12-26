@@ -181,7 +181,7 @@ for _prod in _pruned:
         getattr(process,_prod).select.append(\"keep (4900001 <= abs(pdgId) <= 4900991 )\")
 ">> $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_GS_cfg_tmp.py
 
-tail -n-8  $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_GS_cfg.py >>  $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_GS_cfg_tmp.py
+tail -n8  $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_GS_cfg.py >>  $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_GS_cfg_tmp.py
 mv  $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_GS_cfg_tmp.py $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_GS_cfg.py
 #rm $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_GS_cfg_tmp.py
 
@@ -204,13 +204,13 @@ eval `scram runtime -sh`
 scram b
 cd -
 
-cmsDriver.py step1 --filein $work_space/output/$gridpack_name/file:${gridpack_name}_${seed}_GS.root --fileout $work_space/output/$gridpack_name/file:${gridpack_name}_${seed}_DR_step1.root --mc --eventcontent PREMIXRAW --datatier GEN-SIM-RAW --conditions 80X_mcRun2_asymptotic_2016_TrancheIV_v6 --step DIGIPREMIX_S2,DATAMIX,L1,DIGI2RAW,HLT:@frozen2016 -n $n_of_events --python_filename $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_DR_step1_cfg.py --era Run2_2016 --datamix PreMix --no_exec #--pileup_input filelist:/mnt/t3nfs01/data01/shome/grauco/pileup_filelist.txt
+cmsDriver.py step1 --filein $work_space/output/$gridpack_name/file:${gridpack_name}_${seed}_GS.root --fileout $work_space/output/$gridpack_name/${gridpack_name}_${seed}_DR_step1.root --mc --eventcontent PREMIXRAW --datatier GEN-SIM-RAW --conditions 80X_mcRun2_asymptotic_2016_TrancheIV_v6 --step DIGIPREMIX_S2,DATAMIX,L1,DIGI2RAW,HLT:@frozen2016 -n $n_of_events --python_filename $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_DR_step1_cfg.py --era Run2_2016 --datamix PreMix --no_exec #--pileup_input filelist:/mnt/t3nfs01/data01/shome/grauco/pileup_filelist.txt
 
 if [ ! -z $nThreads ]; then
   cmsRun $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_DR_step1_cfg.py -n $nThreads
 fi
 
-rm $work_space/output/$gridpack_name/file:${gridpack_name}_${seed}_GS.root
+rm $work_space/output/$gridpack_name/${gridpack_name}_${seed}_GS.root
 
 cmsDriver.py step2 --filein $work_space/output/$gridpack_name/file:${gridpack_name}_${seed}_DR_step1.root --fileout $work_space/output/$gridpack_name/file:${gridpack_name}_${seed}_DR.root --mc --eventcontent AODSIM --runUnscheduled --datatier AODSIM --conditions 80X_mcRun2_asymptotic_2016_TrancheIV_v6 --step RAW2DIGI,RECO,EI -n $n_of_events --python_filename $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_DR_cfg.py --era Run2_2016 --no_exec
 
@@ -218,7 +218,7 @@ if [ ! -z $nThreads ]; then
   cmsRun $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_DR_cfg.py -n $nThreads
 fi
 
-$work_space/output/$gridpack_name/file:${gridpack_name}_${seed}_DR_step1.root
+#$work_space/output/$gridpack_name/${gridpack_name}_${seed}_DR_step1.root
 
 cmsDriver.py step1 --filein $work_space/output/$gridpack_name/file:${gridpack_name}_${seed}_DR.root --fileout $work_space/output/$gridpack_name/file:${gridpack_name}_${seed}_MINIAOD.root --mc --eventcontent MINIAODSIM --runUnscheduled --datatier MINIAODSIM --conditions 80X_mcRun2_asymptotic_2016_TrancheIV_v6 --step PAT -n $n_of_events --python_filename $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_MINIAOD_cfg.py --era Run2_2016 --no_exec
 

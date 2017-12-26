@@ -44,41 +44,26 @@ def main():
     nEvents = args.nEvents
     nThreads = args.nThreads
 
-    call("source /cvmfs/cms.cern.ch/cmsset_default.sh", shell=True)
-    call("export SCRAM_ARCH=slc6_amd64_gcc481", shell=True)
-    if os.path.exists( os.path.join(work_space, "CMSSW_7_1_28/src") ):
-        print "Release CMSSW_7_1_28 already exists"
-    else:
-        os.chdir(work_space)
-        call("scram p CMSSW_7_1_28", shell=True)
-        os.chdir("..")
+    initialiseCMSSW(cmsswVersion = "7_1_28", arch = "gcc481", work_space = work_space)
 
-    os.chdir(work_space + "/CMSSW_7_1_28/src")
-    call("eval `scram runtime -sh`", shell=True)
-    print "Set up CMSSW environment"
+    cmssw7_output_path = "CMSSW_7_1_28/src/Configuration/GenProduction/python"
 
-    cmssw_output_path = "CMSSW_7_1_28/src/Configuration/GenProduction/python"
-
-    if not os.path.exists( os.path.join(work_space, cmssw_output_path)):
+    if not os.path.exists( os.path.join(work_space, cmssw7_output_path)):
         print "CMSSW output path doesn't exist. Creating now..."
-        os.makedirs( os.path.join(work_space, cmssw_output_path) )
+        os.makedirs( os.path.join(work_space, cmssw7_output_path) )
 
-    writeGenSimConfig(gridpack_name, work_space, cmssw_output_path, m_Z, alpha_D, r_inv)
+    writeGenSimConfig(gridpack_name, work_space, cmssw7_output_path, m_Z, alpha_D, r_inv)
 
-    # Compile
-    os.chdir( os.path.join(work_space, "CMSSW_7_1_28/src") )
-    call("scram b", shell=True)
-
-    os.chdir( os.path.join(work_space, "CMSSW_7_1_28/src") )
     call("echo $DBS_CLIENT_CONFIG", shell=True)
- 
+
     call("cmsDriver.py Configuration/GenProduction/python/{0}_GS-fragment.py \
         --fileout {1}/Output/{0}/file:{0}_{2}_GS.root --mc --eventcontent RAWSIM \
         --datatier GEN-SIM --conditions MCRUN2_71_V3::All --beamspot Realistic50ns13TeVCollision \
         --step GEN,SIM -n {3} --python_filename {1}/{4}/{0}_{2}_GS_cfg.py \
         --customise SLHCUpgradeSimulations/Configuration/postLS1Customs.customisePostLS1 \
         --magField 38T_PostLS1 --no_exec".format(gridpack_name, work_space, seed, nEvents, nested_output), shell=True)
-    
+        # ^^^ Doesn't work and script fails if "cmsenv" / "eval `scram runtime -sh`" doesn't work
+
     commonStrConfig = "{0}/{1}/{2}_{3}_GS_cfg".format(work_space, nested_output, gridpack_name, seed)
     # Copy the first 8 lines of the first file and write to the second file
     call("head -n8 {0}.py > {0}_tmp.py".format(commonStrConfig), shell=True)
@@ -91,15 +76,26 @@ def main():
     os.remove( "{0}.py".format(commonStrConfig) )
     os.rename(commonStrConfig+"_tmp.py", commonStrConfig+".py")
     
-    # CONTINUE FROM L189 OF set_config.sh. SEE IF I CAN TIDY UP THE head/tail COMMANDS AND DO THEM IN PYTHON INSTEAD
+    call ("cmsRun {0}.py -n {1}".format(commonStrConfig, args.nThreads), shell=True)
+    print "Starting GEN-SIM production"
+
+    initialiseCMSSW(cmsswVersion = "8_0_21", arch = "gcc530", work_space = work_space)
+
+    call("cmsDriver.py step1 --filein {0}/Output/{1}/file:{1}_{2}_GS.root --fileout {0}/Output/{1}/file:{1}_{2}_DR_step1.root \
+    --mc --eventcontent PREMIXRAW --datatier GEN-SIM-RAW --conditions 80X_mcRun2_asymptotic_2016_TrancheIV_v6 \
+    --step DIGIPREMIX_S2,DATAMIX,L1,DIGI2RAW,HLT:@frozen2016 -n {3} \
+    --python_filename {0}/{4}/{1}_{2}_DR_step1_cfg.py --datamix PreMix --no_exec \
+    #--pileup_input filelist:/mnt/t3nfs01/data01/shome/grauco/pileup_filelist.txt --era Run2_2016".format(work_space, gridpack_name, seed, nEvents, nested_output), shell=True)
+
+    # CONTINUE FROM L209 OF set_config.sh. SEE IF I CAN TIDY UP THE head/tail COMMANDS AND DO THEM IN PYTHON INSTEAD
 
 
-def writeGenSimConfig(gridpack_name, work_space, cmssw_output_path, m_Z, alpha_D, r_inv):
+def writeGenSimConfig(gridpack_name, work_space, cmssw7_output_path, m_Z, alpha_D, r_inv):
     """
     Write the Python config file for sample production with Pythia
     """
     
-    configPath = work_space + "/" + cmssw_output_path + "/" + gridpack_name + "_GS-fragment.py"
+    configPath = work_space + "/" + cmssw7_output_path + "/" + gridpack_name + "_GS-fragment.py"
     configFile = open(configPath, "w+")
 
     configFile.write("""
@@ -166,7 +162,8 @@ generator = cms.EDFilter(\"Pythia8GeneratorFilter\",
 
 
 def writeCmsRunConfig(work_space, nested_output, gridpack_name, seed):
-    
+    """
+    """
     configPath = work_space + "/" + nested_output + "/" + "{0}_{1}_GS_cfg_tmp.py".format(gridpack_name, seed)
     configFile = open(configPath, "a")
 
@@ -204,6 +201,30 @@ for _prod in _pruned:
     configFile.close()
 
     print "cmsRun config file appended"
+
+
+def initialiseCMSSW(cmsswVersion, arch, work_space):
+    """
+    Initialise a CMSSW release
+    """
+
+    call("source /cvmfs/cms.cern.ch/cmsset_default.sh", shell=True)
+    call("export SCRAM_ARCH=slc6_amd64_{0}".format(arch), shell=True)
+    if os.path.exists( os.path.join( work_space, "CMSSW_{0}/src".format(cmsswVersion) ) ):
+        print "Release CMSSW_{0} already exists".format(cmsswVersion)
+    else:
+        os.chdir(work_space)
+        call("scram p CMSSW_{0}".format(cmsswVersion), shell=True)
+        os.chdir("..")
+
+    os.chdir( work_space + "/CMSSW_{0}/src".format(cmsswVersion) )
+    call("eval `scram runtime -sh`", shell=True)
+    print "Set up CMSSW_{0} environment".format(cmsswVersion) 
+
+    # Compile and re-initialise environment
+    os.chdir( os.path.join( work_space, "CMSSW_{0}/src".format(cmsswVersion) ) )
+    call("scram b", shell=True)
+    call("eval `scramv1 runtime -sh`", shell=True)  
 
 
 if __name__ == '__main__':
