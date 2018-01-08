@@ -84,8 +84,9 @@ def main():
     call("cmsDriver.py step1 --filein {0}/Output/{1}/file:{1}_{2}_GS.root --fileout {0}/Output/{1}/file:{1}_{2}_DR_step1.root \
     --mc --eventcontent PREMIXRAW --datatier GEN-SIM-RAW --conditions 80X_mcRun2_asymptotic_2016_TrancheIV_v6 \
     --step DIGIPREMIX_S2,DATAMIX,L1,DIGI2RAW,HLT:@frozen2016 -n {3} \
-    --python_filename {0}/{4}/{1}_{2}_DR_step1_cfg.py --datamix PreMix --no_exec \
-    #--pileup_input filelist:/mnt/t3nfs01/data01/shome/grauco/pileup_filelist.txt --era Run2_2016".format(work_space, gridpack_name, seed, nEvents, nested_output), shell=True)
+    --python_filename {0}/{4}/{1}_{2}_DR_step1_cfg.py --datamix PreMix --no_exec --era Run2_2016 \
+    #--pileup_input filelist:/mnt/t3nfs01/data01/shome/grauco/pileup_filelist.txt".format(work_space, gridpack_name, seed, nEvents, nested_output), shell=True)
+    # ADD PATH TO PILEUP FILE LIST
 
     # CONTINUE FROM L209 OF set_config.sh. SEE IF I CAN TIDY UP THE head/tail COMMANDS AND DO THEM IN PYTHON INSTEAD
 
