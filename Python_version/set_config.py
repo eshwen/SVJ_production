@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 import argparse
 import os
-import stat
-import sys
-from subprocess import call
-from string import replace
+import pprint
 import shutil
+import stat
+from string import replace
+from subprocess import call, Popen, PIPE
+import sys
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-w", "--workingDir", default = os.path.join("Working_Dir"), help = "Top level of working directory to store the output")
@@ -14,7 +15,7 @@ parser.add_argument("--alphaD", default = 0.2, type = float, help = "Running dar
 parser.add_argument("--mZ", default = 3000, type = int, help = "Mass of the Z' (GeV)")
 parser.add_argument("--rInv", default = 0.3, type = float, help = "Fraction of stable hadrons")
 parser.add_argument("-s", "--seed", default = 0, type = int, help = "Random number generator seed")
-parser.add_argument("--nThreads", default = 1, type = int, help = "Number of threads to execute with")
+parser.add_argument("--nThreads", default = 8, type = int, help = "Number of threads to execute with")
 
 args = parser.parse_args()
 
@@ -44,6 +45,7 @@ def main():
     nEvents = args.nEvents
     nThreads = args.nThreads
 
+    # Initialise an instance of CMSSW for Pythia version required for GEN-SIM productiion
     initialiseCMSSW(cmsswVersion = "7_1_28", arch = "gcc481", work_space = work_space)
 
     cmssw7_output_path = "CMSSW_7_1_28/src/Configuration/GenProduction/python"
@@ -54,41 +56,52 @@ def main():
 
     writeGenSimConfig(gridpack_name, work_space, cmssw7_output_path, m_Z, alpha_D, r_inv)
 
-    call("echo $DBS_CLIENT_CONFIG", shell=True)
+    #call("echo $DBS_CLIENT_CONFIG", shell=True)
 
+    # Run cmsDriver to create config file
     call("cmsDriver.py Configuration/GenProduction/python/{0}_GS-fragment.py \
         --fileout {1}/Output/{0}/file:{0}_{2}_GS.root --mc --eventcontent RAWSIM \
         --datatier GEN-SIM --conditions MCRUN2_71_V3::All --beamspot Realistic50ns13TeVCollision \
         --step GEN,SIM -n {3} --python_filename {1}/{4}/{0}_{2}_GS_cfg.py \
         --customise SLHCUpgradeSimulations/Configuration/postLS1Customs.customisePostLS1 \
         --magField 38T_PostLS1 --no_exec".format(gridpack_name, work_space, seed, nEvents, nested_output), shell=True)
-        # ^^^ Doesn't work and script fails if "cmsenv" / "eval `scram runtime -sh`" doesn't work
+    
+    commonStrConfig = "{0}/{1}/{2}_{3}".format(work_space, nested_output, gridpack_name, seed)
 
-    commonStrConfig = "{0}/{1}/{2}_{3}_GS_cfg".format(work_space, nested_output, gridpack_name, seed)
-    # Copy the first 8 lines of the first file and write to the second file
-    call("head -n8 {0}.py > {0}_tmp.py".format(commonStrConfig), shell=True)
+    writeCmsRunConfig(commonStrConfig, seed, cfgType = "GS")
     
-    writeCmsRunConfig(work_space, nested_output, gridpack_name, seed)
-
-    # Copy the last 8 lines of the first file and append to the second file
-    call("tail -n8 {0}.py >> {0}_tmp.py".format(commonStrConfig), shell=True)
-    
-    os.remove( "{0}.py".format(commonStrConfig) )
-    os.rename(commonStrConfig+"_tmp.py", commonStrConfig+".py")
-    
-    call ("cmsRun {0}.py -n {1}".format(commonStrConfig, args.nThreads), shell=True)
+    # Run cmsRun to make root files
+    call("cmsRun {0}.py -n {1}".format(commonStrConfig, nThreads), shell=True)
     print "Starting GEN-SIM production"
 
+    # Initialise another version of CMSSW for Pythia version required for reco level generation
     initialiseCMSSW(cmsswVersion = "8_0_21", arch = "gcc530", work_space = work_space)
 
     call("cmsDriver.py step1 --filein {0}/Output/{1}/file:{1}_{2}_GS.root --fileout {0}/Output/{1}/file:{1}_{2}_DR_step1.root \
     --mc --eventcontent PREMIXRAW --datatier GEN-SIM-RAW --conditions 80X_mcRun2_asymptotic_2016_TrancheIV_v6 \
     --step DIGIPREMIX_S2,DATAMIX,L1,DIGI2RAW,HLT:@frozen2016 -n {3} \
-    --python_filename {0}/{4}/{1}_{2}_DR_step1_cfg.py --datamix PreMix --no_exec --era Run2_2016 \
-    #--pileup_input filelist:/mnt/t3nfs01/data01/shome/grauco/pileup_filelist.txt".format(work_space, gridpack_name, seed, nEvents, nested_output), shell=True)
-    # ADD PATH TO PILEUP FILE LIST
+    --python_filename {0}/{4}/{1}_{2}_DR_step1_cfg.py --datamix PreMix --no_exec \
+    --pileup_input filelist:{0}/../../global/pileup_filelist.txt --era Run2_2016".format(work_space, gridpack_name, seed, nEvents, nested_output), shell=True)
 
-    # CONTINUE FROM L209 OF set_config.sh. SEE IF I CAN TIDY UP THE head/tail COMMANDS AND DO THEM IN PYTHON INSTEAD
+    call("cmsRun {0}_DR_step1_cfg.py -n {1}".format(commonStrConfig, nThreads), shell=True)
+
+    call("cmsDriver.py step2 --filein {0}/Output/{1}/file:{1}_{2}_DR_step1.root --fileout {0}/Output/{1}/file:{1}_{2}_DR.root \
+    --mc --eventcontent AODSIM --runUnscheduled --datatier AODSIM --conditions 80X_mcRun2_asymptotic_2016_TrancheIV_v6 \
+    --step RAW2DIGI,RECO,EI -n {3} --python_filename {0}/{4}/{1}_{2}_DR_cfg.py --era Run2_2016 \
+    --no_exec".format(work_space, gridpack_name, seed, nEvents, nested_output), shell=True)
+
+    call("cmsRun {0}_DR_cfg.py -n {1}".format(commonStrConfig, nThreads), shell=True)
+
+    call("cmsDriver.py step1 --filein {0}/Output/{1}/file:{1}_{2}_DR.root --fileout {0}/Output/{1}/file:{1}_{2}_MINIAOD.root \
+    --mc --eventcontent MINIAODSIM --runUnscheduled --datatier MINIAODSIM --conditions 80X_mcRun2_asymptotic_2016_TrancheIV_v6 \
+    --step PAT -n {3} --python_filename {0}/{4}/{1}_{2}_MINIAOD_cfg.py --era Run2_2016 \
+    --no_exec".format(work_space, gridpack_name, seed, nEvents, nested_output), shell=True)
+
+    writeCmsRunConfig(commonStrConfig, seed, cfgType = "MINIAOD")
+
+    call("cmsRun {0}_MINIAOD_cfg.py -n {1}".format(commonStrConfig, nThreads), shell=True)
+
+    # CURRENTLY I HAVE TO RUN THE SCRIPT TWICE TO MAKE SURE IT DOES THE CMSENV PROPERLY
 
 
 def writeGenSimConfig(gridpack_name, work_space, cmssw7_output_path, m_Z, alpha_D, r_inv):
@@ -162,13 +175,18 @@ generator = cms.EDFilter(\"Pythia8GeneratorFilter\",
     print "GEN-SIM fragment config written"
 
 
-def writeCmsRunConfig(work_space, nested_output, gridpack_name, seed):
+def writeCmsRunConfig(commonFilePath, seed, cfgType):
     """
+    Insert following code before last 8 lines of cmsRun config file
     """
-    configPath = work_space + "/" + nested_output + "/" + "{0}_{1}_GS_cfg_tmp.py".format(gridpack_name, seed)
-    configFile = open(configPath, "a")
+    configPath = "{0}_{1}_cfg.py".format(commonFilePath, cfgType)
+    configFile = open(configPath, "r")
 
-    configFile.write("""
+    fileLineList = configFile.readlines()
+    configFile.close()
+
+    # Two blocks of code to add to different configs
+    gsCodeToAdd = """
 # reset all random numbers to ensure statistically distinct but reproducible jobs
 from IOMC.RandomEngine.RandomServiceHelper import RandomNumberServiceHelper
 randHelper = RandomNumberServiceHelper(process.RandomNumberGeneratorService)
@@ -190,15 +208,27 @@ if hasattr(process,'genJetParticles') and hasattr(process,'genParticlesForJetsNo
         'keep *_genParticlesForJets_*_*',
         'keep *_genParticlesForJetsNoNu_*_*',
     ])
+    """.format(seed)
 
+    miniaodCodeToAdd = """
 # miniAOD settings
 _pruned = [\"prunedGenParticles\"]
 for _prod in _pruned:
     if hasattr(process,_prod):
         # keep HV particles
-        getattr(process,_prod).select.append(\"keep (4900001 <= abs(pdgId) <= 4900991 )\"))
+        getattr(process,_prod).select.append(\"keep (4900001 <= abs(pdgId) <= 4900991 )\")
     """.format(seed)
-    )
+
+    if cfgType == "GS":
+        fileLineList.insert( len(fileLineList[8:]), gsCodeToAdd + miniaodCodeToAdd)
+    elif cfgType == "MINIAOD":
+        fileLineList.insert( len(fileLineList[8:]), miniaodCodeToAdd)
+    else:
+        raise ValueError("Incorrect cmsDriver cfg type given.")
+
+    configFile = open(configPath, "w")
+    fileLineList = "".join(fileLineList)
+    configFile.write(fileLineList)
     configFile.close()
 
     print "cmsRun config file appended"
@@ -219,15 +249,47 @@ def initialiseCMSSW(cmsswVersion, arch, work_space):
         os.chdir("..")
 
     os.chdir( work_space + "/CMSSW_{0}/src".format(cmsswVersion) )
-    call("eval `scram runtime -sh`", shell=True)
+    sourceCMSSW()
     print "Set up CMSSW_{0} environment".format(cmsswVersion) 
 
     # Compile and re-initialise environment
     os.chdir( os.path.join( work_space, "CMSSW_{0}/src".format(cmsswVersion) ) )
     call("scram b", shell=True)
-    call("eval `scramv1 runtime -sh`", shell=True)  
+    print "current dir: ", os.getcwd()
+    sourceCMSSW()
+
+
+def sourceCMSSW():
+    """
+    Set up the CMSSW environment and make sure environment changes are reflected in Python
+    """
+    envCommand = ["bash", "-c", "eval `scramv1 runtime -sh` && env"]
+    proc = Popen(envCommand, stdout = PIPE)
+
+    for line in proc.stdout:
+        (key, _, value) = line.partition("=")
+        os.environ[key] = value
+
+    proc.communicate()
+    pprint.pprint(dict(os.environ))
 
 
 if __name__ == '__main__':
     main()
     sys.exit("Completed")
+
+
+# Error for each cmsDriver config file when trying to run cmsRun:
+
+# ----- Begin Fatal Exception 09-Jan-2018 16:25:47 GMT-----------------------
+# An exception of category 'ConfigFileReadError' occurred while
+#    [0] Processing the python configuration file named /storage/eb16003/Semi-visible_jets/SVJ_production/Python_version/Working_Dir/Output/alphaD-0_2_mZ-3000_rinv-0_3/cfg_py/alphaD-0_2_mZ-3000_rinv-0_3_0_DR_step1_cfg.py
+# Exception Message:
+# python encountered the error: <type 'exceptions.RuntimeError'>
+# edm::FileInPath unable to find file SimCalorimetry/HcalSimProducers/data/calor_corr01.txt anywhere in the search path.
+# The search path is defined by: CMSSW_SEARCH_PATH
+# ${CMSSW_SEARCH_PATH} is: /storage/eb16003/Semi-visible_jets/SVJ_production/Python_version/Working_Dir/CMSSW_8_0_21/src:/storage/eb16003/Semi-visible_jets/SVJ_production/Python_version/Working_Dir/CMSSW_8_0_21/external/slc6_amd64_gcc530/data:/cvmfs/cms.cern.ch/slc6_amd64_gcc530/cms/cmssw/CMSSW_8_0_21/src:/cvmfs/cms.cern.ch/slc6_amd64_gcc530/cms/cmssw/CMSSW_8_0_21/external/slc6_amd64_gcc530/data:/storage/eb16003/Semi-visible_jets/SVJ_production/Python_version/Working_Dir/CMSSW_8_0_21/src:/storage/eb16003/Semi-visible_jets/SVJ_production/Python_version/Working_Dir/CMSSW_8_0_21/external/slc6_amd64_gcc530/data:/cvmfs/cms.cern.ch/slc6_amd64_gcc530/cms/cmssw/CMSSW_8_0_21/src:/cvmfs/cms.cern.ch/slc6_amd64_gcc530/cms/cmssw/CMSSW_8_0_21/external/slc6_amd64_gcc530/data:/storage/eb16003/Semi-visible_jets/SVJ_production/Python_version/Working_Dir/CMSSW_7_1_28/src:/storage/eb16003/Semi-visible_jets/SVJ_production/Python_version/Working_Dir/CMSSW_7_1_28/external/slc6_amd64_gcc481/data:/cvmfs/cms.cern.ch/slc6_amd64_gcc481/cms/cmssw/CMSSW_7_1_28/src:/cvmfs/cms.cern.ch/slc6_amd64_gcc481/cms/cmssw/CMSSW_7_1_28/external/slc6_amd64_gcc481/data:/storage/eb16003/Semi-visible_jets/SVJ_production/Python_version/Working_Dir/CMSSW_7_1_28/src:/storage/eb16003/Semi-visible_jets/SVJ_production/Python_version/Working_Dir/CMSSW_7_1_28/external/slc6_amd64_gcc481/data:/cvmfs/cms.cern.ch/slc6_amd64_gcc481/cms/cmssw/CMSSW_7_1_28/src:/cvmfs/cms.cern.ch/slc6_amd64_gcc481/cms/cmssw/CMSSW_7_1_28/external/slc6_amd64_gcc481/data 
+# 
+# Current directory is: /storage/eb16003/Semi-visible_jets/SVJ_production/Python_version/Working_Dir/CMSSW_8_0_21/src
+# 
+# ----- End Fatal Exception -------------------------------------------------

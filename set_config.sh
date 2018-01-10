@@ -22,7 +22,6 @@ alpha_D=$3
 m_Z=$4
 r_inv=$5
 
-#gridpack_name=alphaD${alpha_D}_mZ${m_Z}_rinv${r_inv}
 seed=$6
 
 alpha_D_mod="${alpha_D:0:1}_${alpha_D:2}"
@@ -181,8 +180,8 @@ for _prod in _pruned:
         getattr(process,_prod).select.append(\"keep (4900001 <= abs(pdgId) <= 4900991 )\")
 ">> $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_GS_cfg_tmp.py
 
-tail -n8  $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_GS_cfg.py >>  $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_GS_cfg_tmp.py
-mv  $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_GS_cfg_tmp.py $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_GS_cfg.py
+tail -n -8 $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_GS_cfg.py >>  $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_GS_cfg_tmp.py
+mv $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_GS_cfg_tmp.py $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_GS_cfg.py
 #rm $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_GS_cfg_tmp.py
 
 if [ ! -z $nThreads ]; then
@@ -204,7 +203,7 @@ eval `scram runtime -sh`
 scram b
 cd -
 
-cmsDriver.py step1 --filein $work_space/output/$gridpack_name/file:${gridpack_name}_${seed}_GS.root --fileout $work_space/output/$gridpack_name/${gridpack_name}_${seed}_DR_step1.root --mc --eventcontent PREMIXRAW --datatier GEN-SIM-RAW --conditions 80X_mcRun2_asymptotic_2016_TrancheIV_v6 --step DIGIPREMIX_S2,DATAMIX,L1,DIGI2RAW,HLT:@frozen2016 -n $n_of_events --python_filename $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_DR_step1_cfg.py --era Run2_2016 --datamix PreMix --no_exec #--pileup_input filelist:/mnt/t3nfs01/data01/shome/grauco/pileup_filelist.txt
+cmsDriver.py step1 --filein $work_space/output/$gridpack_name/file:${gridpack_name}_${seed}_GS.root --fileout $work_space/output/$gridpack_name/${gridpack_name}_${seed}_DR_step1.root --mc --eventcontent PREMIXRAW --datatier GEN-SIM-RAW --conditions 80X_mcRun2_asymptotic_2016_TrancheIV_v6 --step DIGIPREMIX_S2,DATAMIX,L1,DIGI2RAW,HLT:@frozen2016 -n $n_of_events --python_filename $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_DR_step1_cfg.py --era Run2_2016 --datamix PreMix --no_exec --pileup_input filelist:${work_space}/../global/pileup_filelist.txt
 
 if [ ! -z $nThreads ]; then
   cmsRun $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_DR_step1_cfg.py -n $nThreads
@@ -222,7 +221,7 @@ fi
 
 cmsDriver.py step1 --filein $work_space/output/$gridpack_name/file:${gridpack_name}_${seed}_DR.root --fileout $work_space/output/$gridpack_name/file:${gridpack_name}_${seed}_MINIAOD.root --mc --eventcontent MINIAODSIM --runUnscheduled --datatier MINIAODSIM --conditions 80X_mcRun2_asymptotic_2016_TrancheIV_v6 --step PAT -n $n_of_events --python_filename $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_MINIAOD_cfg.py --era Run2_2016 --no_exec
 
-head -n8 $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_MINIAOD_cfg.py >  $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_MINIAOD_cfg_tmp.py
+head -n -8 $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_MINIAOD_cfg.py >  $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_MINIAOD_cfg_tmp.py
 
 echo "
 # miniAOD settings
@@ -233,9 +232,9 @@ for _prod in _pruned:
         getattr(process,_prod).select.append(\"keep (4900001 <= abs(pdgId) <= 4900991 )\")
 ">> $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_MINIAOD_cfg_tmp.py
 
-tail -n8  $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_MINIAOD_cfg.py >>  $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_MINIAOD_cfg_tmp.py
-mv  $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_MINIAOD_cfg_tmp.py $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_MINIAOD_cfg.py
-#rm $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_MINIAOD_cfg_tmp.py
+tail -n -8 $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_MINIAOD_cfg.py >> $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_MINIAOD_cfg_tmp.py
+rm $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_MINIAOD_cfg.py
+mv $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_MINIAOD_cfg_tmp.py $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_MINIAOD_cfg.py
 
 if [ ! -z $nThreads ]; then
   cmsRun $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_MINIAOD_cfg.py -n $nThreads
