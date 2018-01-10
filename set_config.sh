@@ -22,8 +22,11 @@ alpha_D=$3
 m_Z=$4
 r_inv=$5
 
-gridpack_name=alphaD${alpha_D}_mZ${m_Z}_rinv${r_inv}
 seed=$6
+
+alpha_D_mod="${alpha_D:0:1}_${alpha_D:2}"
+r_inv_mod="${r_inv:0:1}_${r_inv:2}"
+gridpack_name=alphaD${alpha_D_mod}_mZ${m_Z}_rinv${r_inv_mod}
 
 if [ ! -d $work_space ]; then
   mkdir $work_space
@@ -72,9 +75,6 @@ cmssw_path1=$CMSSW_BASE
 
 #if [[ ! -a $work_space/CMSSW_7_1_28/src/Configuration/GenProduction/python/${gridpack_name}_GS-fragment.py ]]; then
 
-alpha_D_mod="${alpha_D:0:1}.${alpha_D:1}"
-r_inv_mod="${r_inv:0:1}.${r_inv:1}"
-
 echo "import FWCore.ParameterSet.Config as cms
 from Configuration.Generator.Pythia8CommonSettings_cfi import *
 from Configuration.Generator.Pythia8CUEP8M1Settings_cfi import *
@@ -113,15 +113,15 @@ generator = cms.EDFilter(\"Pythia8GeneratorFilter\",
             #'HiddenValley:NBFlavRun = 0', # number of bosonic flavor for running 
             #'HiddenValley:NFFlavRun = 2', # number of fermionic flavor for running 
             'HiddenValley:alphaOrder = 1',
-            'HiddenValley:Lambda = {:g}'.format($alpha_D_mod), #alpha, confinement scale   
+            'HiddenValley:Lambda = {:g}'.format($alpha_D), #alpha, confinement scale   
             'HiddenValley:nFlav = 1', # this dictates what kind of hadrons come out of the shower, if nFlav = 2, for example, there will be many different flavor of hadrons 
             'HiddenValley:probVector = 0.75', # ratio of number of vector mesons over scalar meson, 3:1 is from naive degrees of freedom counting 
             'HiddenValley:pTminFSR = {:g}'.format(10), # cutoff for the showering, should be roughly confinement scale 
             
-            '4900111:oneChannel = 1 {:g} 0 4900211 -4900211'.format($r_inv_mod),
-            '4900111:addChannel = 1 {:g} 91 1 -1'.format(1.0-$r_inv_mod),
-            '4900113:oneChannel = 1 {:g} 0 4900213 -4900213'.format($r_inv_mod),
-            '4900113:addChannel = 1 {:g} 91 1 -1'.format(1.0-$r_inv_mod),
+            '4900111:oneChannel = 1 {:g} 0 4900211 -4900211'.format($r_inv),
+            '4900111:addChannel = 1 {:g} 91 1 -1'.format(1.0-$r_inv),
+            '4900113:oneChannel = 1 {:g} 0 4900213 -4900213'.format($r_inv),
+            '4900113:addChannel = 1 {:g} 91 1 -1'.format(1.0-$r_inv),
             ),
         parameterSets = cms.vstring(
             'pythia8CommonSettings',
@@ -177,8 +177,8 @@ for _prod in _pruned:
         getattr(process,_prod).select.append(\"keep (4900001 <= abs(pdgId) <= 4900991 )\")
 ">> $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_GS_cfg_tmp.py
 
-tail -n-8  $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_GS_cfg.py >>  $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_GS_cfg_tmp.py
-mv  $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_GS_cfg_tmp.py $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_GS_cfg.py
+tail -n -8 $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_GS_cfg.py >>  $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_GS_cfg_tmp.py
+mv $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_GS_cfg_tmp.py $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_GS_cfg.py
 #rm $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_GS_cfg_tmp.py
 
 if [ ! -z $nThreads ]; then
@@ -200,13 +200,13 @@ eval `scram runtime -sh`
 scram b
 cd -
 
-cmsDriver.py step1 --filein $work_space/output/$gridpack_name/file:${gridpack_name}_${seed}_GS.root --fileout $work_space/output/$gridpack_name/file:${gridpack_name}_${seed}_DR_step1.root --mc --eventcontent PREMIXRAW --datatier GEN-SIM-RAW --conditions 80X_mcRun2_asymptotic_2016_TrancheIV_v6 --step DIGIPREMIX_S2,DATAMIX,L1,DIGI2RAW,HLT:@frozen2016 -n $n_of_events --python_filename $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_DR_step1_cfg.py --pileup_input filelist:/mnt/t3nfs01/data01/shome/grauco/pileup_filelist.txt --era Run2_2016 --datamix PreMix --no_exec
+cmsDriver.py step1 --filein $work_space/output/$gridpack_name/file:${gridpack_name}_${seed}_GS.root --fileout $work_space/output/$gridpack_name/${gridpack_name}_${seed}_DR_step1.root --mc --eventcontent PREMIXRAW --datatier GEN-SIM-RAW --conditions 80X_mcRun2_asymptotic_2016_TrancheIV_v6 --step DIGIPREMIX_S2,DATAMIX,L1,DIGI2RAW,HLT:@frozen2016 -n $n_of_events --python_filename $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_DR_step1_cfg.py --era Run2_2016 --datamix PreMix --no_exec --pileup_input filelist:${work_space}/../global/pileup_filelist.txt
 
 if [ ! -z $nThreads ]; then
   cmsRun $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_DR_step1_cfg.py -n $nThreads
 fi
 
-rm $work_space/output/$gridpack_name/file:${gridpack_name}_${seed}_GS.root
+rm $work_space/output/$gridpack_name/${gridpack_name}_${seed}_GS.root
 
 cmsDriver.py step2 --filein $work_space/output/$gridpack_name/file:${gridpack_name}_${seed}_DR_step1.root --fileout $work_space/output/$gridpack_name/file:${gridpack_name}_${seed}_DR.root --mc --eventcontent AODSIM --runUnscheduled --datatier AODSIM --conditions 80X_mcRun2_asymptotic_2016_TrancheIV_v6 --step RAW2DIGI,RECO,EI -n $n_of_events --python_filename $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_DR_cfg.py --era Run2_2016 --no_exec
 
@@ -214,7 +214,7 @@ if [ ! -z $nThreads ]; then
   cmsRun $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_DR_cfg.py -n $nThreads
 fi
 
-$work_space/output/$gridpack_name/file:${gridpack_name}_${seed}_DR_step1.root
+#$work_space/output/$gridpack_name/${gridpack_name}_${seed}_DR_step1.root
 
 cmsDriver.py step1 --filein $work_space/output/$gridpack_name/file:${gridpack_name}_${seed}_DR.root --fileout $work_space/output/$gridpack_name/file:${gridpack_name}_${seed}_MINIAOD.root --mc --eventcontent MINIAODSIM --runUnscheduled --datatier MINIAODSIM --conditions 80X_mcRun2_asymptotic_2016_TrancheIV_v6 --step PAT -n $n_of_events --python_filename $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_MINIAOD_cfg.py --era Run2_2016 --no_exec
 
@@ -229,15 +229,15 @@ for _prod in _pruned:
         getattr(process,_prod).select.append(\"keep (4900001 <= abs(pdgId) <= 4900991 )\")
 ">> $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_MINIAOD_cfg_tmp.py
 
-tail -n-8  $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_MINIAOD_cfg.py >>  $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_MINIAOD_cfg_tmp.py
-mv  $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_MINIAOD_cfg_tmp.py $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_MINIAOD_cfg.py
-#rm $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_MINIAOD_cfg_tmp.py
+tail -n -8 $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_MINIAOD_cfg.py >> $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_MINIAOD_cfg_tmp.py
+rm $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_MINIAOD_cfg.py
+mv $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_MINIAOD_cfg_tmp.py $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_MINIAOD_cfg.py
 
 if [ ! -z $nThreads ]; then
   cmsRun $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_MINIAOD_cfg.py -n $nThreads
 fi
 
-rm $work_space/output/$gridpack_name/file:${gridpack_name}_${seed}_DR.root
+rm $work_space/output/$gridpack_name/${gridpack_name}_${seed}_DR.root
 
 
 exit
