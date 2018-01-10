@@ -10,10 +10,10 @@ import sys
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-w", "--workingDir", default = os.path.join("Working_Dir"), help = "Top level of working directory to store the output")
-parser.add_argument("-n", "--nEvents", default = 100000, type = int, help = "Number of events to generate")
+parser.add_argument("-n", "--nEvents", default = 1000, type = int, help = "Number of events to generate")
 parser.add_argument("--alphaD", default = 0.2, type = float, help = "Running dark coupling strength at 1 TeV")
 parser.add_argument("--mZ", default = 3000, type = int, help = "Mass of the Z' (GeV)")
-parser.add_argument("--rInv", default = 0.3, type = float, help = "Fraction of stable hadrons")
+parser.add_argument("--rInv", default = 0.3, type = float, help = "Fraction of dark hadrons that are stable")
 parser.add_argument("-s", "--seed", default = 0, type = int, help = "Random number generator seed")
 parser.add_argument("--nThreads", default = 8, type = int, help = "Number of threads to execute with")
 
