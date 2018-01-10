@@ -75,9 +75,6 @@ cmssw_path1=$CMSSW_BASE
 
 #if [[ ! -a $work_space/CMSSW_7_1_28/src/Configuration/GenProduction/python/${gridpack_name}_GS-fragment.py ]]; then
 
-#alpha_D_mod="${alpha_D:0:1}.${alpha_D:1}"
-#r_inv_mod="${r_inv:0:1}.${r_inv:1}"
-
 echo "import FWCore.ParameterSet.Config as cms
 from Configuration.Generator.Pythia8CommonSettings_cfi import *
 from Configuration.Generator.Pythia8CUEP8M1Settings_cfi import *
