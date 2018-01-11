@@ -39,32 +39,38 @@ for alpha_D in 0_1; do # In set_config.sh, alpha_D and r_inv are split by 2nd ch
 		if [ ! -d logs ]; then
 		    mkdir logs
 		fi
+
 		if [ ! -z $n_of_threads ]; then
 
-			if [[ "$HOSTNAME" == *"soolin"* ]]; then
-				# HTCondor submission script
-				Universe = vanilla
-				cmd = $work_space/run_scripts/run_batch_alphaD${alpha_D}_mZ${m_Z}_rinv${r_inv}_${seed}.sh # Command to run
-				use_x509userproxy = true
-				Log        = condor_job_\$(Process).log
-				Output     = condor_job_\$(Process).out
-				Error      = condor_job_\$(Process).error
-				should_transfer_files   = YES
-				when_to_transfer_output = ON_EXIT_OR_EVICT
-				# Resource requests
-				request_cpus = 1
-				request_disk = 100000 # kB
-				request_memory = 900 # MB
-				# Number of instances of job to run
-				queue 1
-				
-			else
+		    if [[ "$HOSTNAME" == *"soolin"* ]]; then
+			echo "
+			# HTCondor submission script
+			Universe = vanilla
+			cmd = ${work_space}/run_scripts/run_batch_alphaD${alpha_D}_mZ${m_Z}_rinv${r_inv}_${seed}.sh
+			use_x509userproxy = true
+			Log        = logs/condor_job_\$(Process).log
+			Output     = logs/condor_job_\$(Process).out
+			Error      = logs/condor_job_\$(Process).error
+			should_transfer_files   = YES
+			when_to_transfer_output = ON_EXIT_OR_EVICT
+			# Resource requests (disk storage in kB, memory in MB)
+			request_cpus = 1
+			request_disk = 5000000
+			request_memory = 1000
+			# Number of instances of job to run
+			queue 1
+			" > $work_space/run_scripts/bristol_condor_submission.job
+
+			chmod +x ${work_space}/run_scripts/run_batch_alphaD${alpha_D}_mZ${m_Z}_rinv${r_inv}_${seed}.sh
+			condor_submit $work_space/run_scripts/bristol_condor_submission.job
+			
+		    else
 		    	if [ -z $MAIL ]; then
 				qsub -N job_alphaD${alpha_D}_mZ${m_Z}_rinv${r_inv}_${seed} -o logs/ -e logs/ -q $queue -cwd $work_space/run_scripts/run_batch_alphaD${alpha_D}_mZ${m_Z}_rinv${r_inv}_${seed}.sh
 		    	else
 				qsub -N job_alphaD${alpha_D}_mZ${m_Z}_rinv${r_inv}_${seed} -o logs/ -e logs/ -q $queue -cwd -m ae -M $MAIL $work_space/run_scripts/run_batch_alphaD${alpha_D}_mZ${m_Z}_rinv${r_inv}_${seed}.sh
 		    	fi
-			fi
+		    fi
 
 		fi
 	    done

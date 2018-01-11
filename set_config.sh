@@ -24,9 +24,9 @@ r_inv=$5
 
 seed=$6
 
-alpha_D_mod="${alpha_D:0:1}_${alpha_D:2}"
-r_inv_mod="${r_inv:0:1}_${r_inv:2}"
-gridpack_name=alphaD${alpha_D_mod}_mZ${m_Z}_rinv${r_inv_mod}
+alpha_D_mod="${alpha_D:0:1}.${alpha_D:2}"
+r_inv_mod="${r_inv:0:1}.${r_inv:2}"
+gridpack_name=alphaD${alpha_D}_mZ${m_Z}_rinv${r_inv}
 
 if [ ! -d $work_space ]; then
   mkdir $work_space
@@ -113,15 +113,15 @@ generator = cms.EDFilter(\"Pythia8GeneratorFilter\",
             #'HiddenValley:NBFlavRun = 0', # number of bosonic flavor for running 
             #'HiddenValley:NFFlavRun = 2', # number of fermionic flavor for running 
             'HiddenValley:alphaOrder = 1',
-            'HiddenValley:Lambda = {:g}'.format($alpha_D), #alpha, confinement scale   
+            'HiddenValley:Lambda = {:g}'.format($alpha_D_mod), #alpha, confinement scale   
             'HiddenValley:nFlav = 1', # this dictates what kind of hadrons come out of the shower, if nFlav = 2, for example, there will be many different flavor of hadrons 
             'HiddenValley:probVector = 0.75', # ratio of number of vector mesons over scalar meson, 3:1 is from naive degrees of freedom counting 
             'HiddenValley:pTminFSR = {:g}'.format(10), # cutoff for the showering, should be roughly confinement scale 
             
-            '4900111:oneChannel = 1 {:g} 0 4900211 -4900211'.format($r_inv),
-            '4900111:addChannel = 1 {:g} 91 1 -1'.format(1.0-$r_inv),
-            '4900113:oneChannel = 1 {:g} 0 4900213 -4900213'.format($r_inv),
-            '4900113:addChannel = 1 {:g} 91 1 -1'.format(1.0-$r_inv),
+            '4900111:oneChannel = 1 {:g} 0 4900211 -4900211'.format($r_inv_mod),
+            '4900111:addChannel = 1 {:g} 91 1 -1'.format(1.0-$r_inv_mod),
+            '4900113:oneChannel = 1 {:g} 0 4900213 -4900213'.format($r_inv_mod),
+            '4900113:addChannel = 1 {:g} 91 1 -1'.format(1.0-$r_inv_mod),
             ),
         parameterSets = cms.vstring(
             'pythia8CommonSettings',
