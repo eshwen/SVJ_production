@@ -1,9 +1,9 @@
 #!/bin/bash
 
 if [ -z $1 ]; then
-  echo "------------------------------------------------------------------------------------------------------------------------------------------------------
-Usage: ./run_bunch_batch.sh WORKING_DIRECTORY  NUMBER_OF_EVENTS  NUMBER_OF_SEEDS NUMBER_OF_THREADS(to not execute cmsRun leave empty)  SITE  EMAIL_ADDRESS
-------------------------------------------------------------------------------------------------------------------------------------------------------"
+  echo "----------------------------------------------------------------------------------------------------------------------------------------------------
+Usage: ./run_bunch_batch.sh WORKING_DIRECTORY  NUMBER_OF_EVENTS  NUMBER_OF_SEEDS  NUMBER_OF_THREADS(to not execute cmsRun leave empty)  EMAIL_ADDRESS
+----------------------------------------------------------------------------------------------------------------------------------------------------"
   exit
 fi
 
@@ -12,15 +12,16 @@ num_ind=1
 n_of_events=$2
 n_of_threads=$4
 n_of_seeds=$3
-site=$5
-MAIL=$6
+MAIL=$5
 
-if [ $site == 'imperial' ]; then
+if [[ "$HOSTNAME" == *"ic.ac.uk" ]]; then
 	queue=hep.q
-elif [ $site == 'zurich' ]; then
+elif [[ "$HOSTNAME" == *"uzh"* ]]; then
 	queue=long.q
+elif [[ "$HOSTNAME" == *"soolin"* ]]; then
+	echo Running at Bristol.
 else
-	echo Site not supported. Please choose \'zurich\' or \'imperial\'.
+	echo Sorry, only Zurich, Imperial College London and Bristol are supported at this time.
 	exit
 fi
 
@@ -39,11 +40,32 @@ for alpha_D in 0_1; do # In set_config.sh, alpha_D and r_inv are split by 2nd ch
 		    mkdir logs
 		fi
 		if [ ! -z $n_of_threads ]; then
-		    if [ -z $MAIL ]; then
-			qsub -N job_alphaD${alpha_D}_mZ${m_Z}_rinv${r_inv}_${seed} -o logs/ -e logs/ -q $queue -cwd $work_space/run_scripts/run_batch_alphaD${alpha_D}_mZ${m_Z}_rinv${r_inv}_${seed}.sh
-		    else
-			qsub -N job_alphaD${alpha_D}_mZ${m_Z}_rinv${r_inv}_${seed} -o logs/ -e logs/ -q $queue -cwd -m ae -M $MAIL $work_space/run_scripts/run_batch_alphaD${alpha_D}_mZ${m_Z}_rinv${r_inv}_${seed}.sh
-		    fi
+
+			if [[ "$HOSTNAME" == *"soolin"* ]]; then
+				# HTCondor submission script
+				Universe = vanilla
+				cmd = $work_space/run_scripts/run_batch_alphaD${alpha_D}_mZ${m_Z}_rinv${r_inv}_${seed}.sh # Command to run
+				use_x509userproxy = true
+				Log        = condor_job_\$(Process).log
+				Output     = condor_job_\$(Process).out
+				Error      = condor_job_\$(Process).error
+				should_transfer_files   = YES
+				when_to_transfer_output = ON_EXIT_OR_EVICT
+				# Resource requests
+				request_cpus = 1
+				request_disk = 100000 # kB
+				request_memory = 900 # MB
+				# Number of instances of job to run
+				queue 1
+				
+			else
+		    	if [ -z $MAIL ]; then
+				qsub -N job_alphaD${alpha_D}_mZ${m_Z}_rinv${r_inv}_${seed} -o logs/ -e logs/ -q $queue -cwd $work_space/run_scripts/run_batch_alphaD${alpha_D}_mZ${m_Z}_rinv${r_inv}_${seed}.sh
+		    	else
+				qsub -N job_alphaD${alpha_D}_mZ${m_Z}_rinv${r_inv}_${seed} -o logs/ -e logs/ -q $queue -cwd -m ae -M $MAIL $work_space/run_scripts/run_batch_alphaD${alpha_D}_mZ${m_Z}_rinv${r_inv}_${seed}.sh
+		    	fi
+			fi
+
 		fi
 	    done
 	done
