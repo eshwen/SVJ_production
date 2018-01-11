@@ -255,14 +255,17 @@ def initialiseCMSSW(cmsswVersion, arch, work_space):
     # Compile and re-initialise environment
     os.chdir( os.path.join( work_space, "CMSSW_{0}/src".format(cmsswVersion) ) )
     call("scram b", shell=True)
-    print "current dir: ", os.getcwd()
-    sourceCMSSW()
+    sourceCMSSW(cmsswVersion, work_space)
 
 
-def sourceCMSSW():
+def sourceCMSSW(cmsswVersion, work_space):
     """
     Set up the CMSSW environment and make sure environment changes are reflected in Python
     """
+
+    # Check I'm in the right directory
+    if not os.getcwd()
+    
     envCommand = ["bash", "-c", "eval `scramv1 runtime -sh` && env"]
     proc = Popen(envCommand, stdout = PIPE)
 
