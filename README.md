@@ -1,6 +1,6 @@
 # SVJ_production
 
-Sample generation can be run on a batch system (currently Zurich, Imperial College London and Bristol are supported).
+Sample generation can be run on a batch system (currently Zurich, Imperial College London, Bristol and lxplus are supported).
 
 To submit sample generation to batch, run
 
@@ -14,7 +14,7 @@ The default values for the important parameters (alpha\_D, r\_inv and m\_Z') are
 
 ## Batch specifics
 
-The batch submission commands are slightly different for Zurich and IC, and very different for Bristol. The script should be able to determine which site you're at. If an error message occurs, try `echo $HOSTNAME` and compare with the statements in the script.
+The batch submission commands are slightly different for Zurich and IC, and very different for Bristol and lxplus. The script should be able to determine which site you're at. If an error message occurs, try `echo $HOSTNAME` and compare with the statements in the script.
 
 A valid grid certificate may be required to run on your site's cluster. If so, initialise a proxy with
 
@@ -24,6 +24,4 @@ voms-proxy-init --voms cms --valid 168:00
 
 which is valid for one week.
 
-At Imperial and Zurich, you can check on your jobs with `qstat`, and at Bristol with `condor_q <user>`.
-
-*ADD SUPPORT FOR RUNNING AT LXPLUS*
+At Imperial and Zurich, you can check on your jobs with `qstat`. At Bristol and lxplus, use `condor_q <user>`.

@@ -15,14 +15,14 @@ n_of_seeds=$3
 MAIL=$5
 
 if [[ "$HOSTNAME" == *"ic.ac.uk" ]]; then
-	queue=hep.q
+    queue=hep.q
 elif [[ "$HOSTNAME" == *"uzh"* ]]; then
-	queue=long.q
-elif [[ "$HOSTNAME" == *"soolin"* ] || [ "$HOSTNAME" == *"lxplus"* ]]; then
-	echo Running on $HOSTNAME.
+    queue=long.q
+elif [[ "$HOSTNAME" = "soolin"* ]] || [[ "$HOSTNAME" = "lxplus"* ]]; then
+    echo Running on $HOSTNAME.
 else
-	echo Sorry, only Zurich, Imperial College London and Bristol are supported at this time.
-	exit
+    echo Sorry, only Zurich, Imperial College London and Bristol are supported at this time.
+    exit
 fi
 
 work_space=$(readlink -m $1)
@@ -35,22 +35,21 @@ for alpha_D in 0_1; do # In set_config.sh, alpha_D and r_inv are split by 2nd ch
 		seed=$(echo 3000+$seed | bc)
 
 		$PWD/set_batch.sh $work_space $n_of_events $alpha_D $m_Z $r_inv $seed $n_of_threads
-		mkdir logs
-		if [ ! -d logs ]; then
-		    mkdir logs
+		if [ ! -d $work_space/logs ]; then
+		    mkdir $work_space/logs
 		fi
 
 		if [ ! -z $n_of_threads ]; then
 
-		    if [[ "$HOSTNAME" == *"soolin"* ] || [ "$HOSTNAME" == *"lxplus"* ]]; then
+		    if [[ "$HOSTNAME" == "soolin"* ]] || [[ "$HOSTNAME" == "lxplus"* ]]; then
 			echo "
 			# HTCondor submission script
 			Universe = vanilla
-			cmd = ${work_space}/run_scripts/run_batch_alphaD${alpha_D}_mZ${m_Z}_rinv${r_inv}_${seed}.sh
+			cmd = $work_space/run_scripts/run_batch_alphaD${alpha_D}_mZ${m_Z}_rinv${r_inv}_${seed}.sh
 			use_x509userproxy = true
-			Log        = logs/condor_job_\$(Process).log
-			Output     = logs/condor_job_\$(Process).out
-			Error      = logs/condor_job_\$(Process).error
+			Log        = $work_space/logs/condor_job_\$(Process).log
+			Output     = $work_space/logs/condor_job_\$(Process).out
+			Error      = $work_space/logs/condor_job_\$(Process).error
 			should_transfer_files   = YES
 			when_to_transfer_output = ON_EXIT_OR_EVICT
 			# Resource requests (disk storage in kB, memory in MB)
@@ -61,14 +60,13 @@ for alpha_D in 0_1; do # In set_config.sh, alpha_D and r_inv are split by 2nd ch
 			queue 1
 			" > $work_space/run_scripts/condor_submission.job
 
-			chmod +x ${work_space}/run_scripts/run_batch_alphaD${alpha_D}_mZ${m_Z}_rinv${r_inv}_${seed}.sh
-			condor_submit $work_space/run_scripts/bristol_condor_submission.job
+			condor_submit $work_space/run_scripts/condor_submission.job
 			
 		    else
 		    	if [ -z $MAIL ]; then
-				qsub -N job_alphaD${alpha_D}_mZ${m_Z}_rinv${r_inv}_${seed} -o logs/ -e logs/ -q $queue -cwd $work_space/run_scripts/run_batch_alphaD${alpha_D}_mZ${m_Z}_rinv${r_inv}_${seed}.sh
+			    qsub -N job_alphaD${alpha_D}_mZ${m_Z}_rinv${r_inv}_${seed} -o logs/ -e logs/ -q $queue -cwd $work_space/run_scripts/run_batch_alphaD${alpha_D}_mZ${m_Z}_rinv${r_inv}_${seed}.sh
 		    	else
-				qsub -N job_alphaD${alpha_D}_mZ${m_Z}_rinv${r_inv}_${seed} -o logs/ -e logs/ -q $queue -cwd -m ae -M $MAIL $work_space/run_scripts/run_batch_alphaD${alpha_D}_mZ${m_Z}_rinv${r_inv}_${seed}.sh
+			    qsub -N job_alphaD${alpha_D}_mZ${m_Z}_rinv${r_inv}_${seed} -o logs/ -e logs/ -q $queue -cwd -m ae -M $MAIL $work_space/run_scripts/run_batch_alphaD${alpha_D}_mZ${m_Z}_rinv${r_inv}_${seed}.sh
 		    	fi
 		    fi
 
