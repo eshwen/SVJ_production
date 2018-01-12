@@ -18,8 +18,8 @@ if [[ "$HOSTNAME" == *"ic.ac.uk" ]]; then
 	queue=hep.q
 elif [[ "$HOSTNAME" == *"uzh"* ]]; then
 	queue=long.q
-elif [[ "$HOSTNAME" == *"soolin"* ]]; then
-	echo Running at Bristol.
+elif [[ "$HOSTNAME" == *"soolin"* ] || [ "$HOSTNAME" == *"lxplus"* ]]; then
+	echo Running on $HOSTNAME.
 else
 	echo Sorry, only Zurich, Imperial College London and Bristol are supported at this time.
 	exit
@@ -42,7 +42,7 @@ for alpha_D in 0_1; do # In set_config.sh, alpha_D and r_inv are split by 2nd ch
 
 		if [ ! -z $n_of_threads ]; then
 
-		    if [[ "$HOSTNAME" == *"soolin"* ]]; then
+		    if [[ "$HOSTNAME" == *"soolin"* ] || [ "$HOSTNAME" == *"lxplus"* ]]; then
 			echo "
 			# HTCondor submission script
 			Universe = vanilla
@@ -59,7 +59,7 @@ for alpha_D in 0_1; do # In set_config.sh, alpha_D and r_inv are split by 2nd ch
 			request_memory = 1000
 			# Number of instances of job to run
 			queue 1
-			" > $work_space/run_scripts/bristol_condor_submission.job
+			" > $work_space/run_scripts/condor_submission.job
 
 			chmod +x ${work_space}/run_scripts/run_batch_alphaD${alpha_D}_mZ${m_Z}_rinv${r_inv}_${seed}.sh
 			condor_submit $work_space/run_scripts/bristol_condor_submission.job
