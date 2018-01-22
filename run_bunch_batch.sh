@@ -21,7 +21,7 @@ elif [[ "$HOSTNAME" == *"uzh"* ]]; then
 elif [[ "$HOSTNAME" = "soolin"* ]] || [[ "$HOSTNAME" = "lxplus"* ]]; then
     echo Running on $HOSTNAME.
 else
-    echo Sorry, only Zurich, Imperial College London and Bristol are supported at this time.
+    echo Sorry, the remote server at $HOSTNAME is not supported at this time.
     exit
 fi
 
