@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import argparse
+import glob
 import os
 import pprint
 import shutil
@@ -11,7 +12,7 @@ import sys
 parser = argparse.ArgumentParser()
 parser.add_argument("-w", "--workingDir", default = os.path.join("Working_Dir"), help = "Top level of working directory to store the output")
 parser.add_argument("-n", "--nEvents", default = 1000, type = int, help = "Number of events to generate")
-parser.add_argument("--alphaD", default = 0.2, type = float, help = "Running dark coupling strength at 1 TeV")
+parser.add_argument("--alphaD", default = 0.1, type = float, help = "Running dark coupling strength at 1 TeV")
 parser.add_argument("--mZ", default = 3000, type = int, help = "Mass of the Z' (GeV)")
 parser.add_argument("--rInv", default = 0.3, type = float, help = "Fraction of dark hadrons that are stable")
 parser.add_argument("-s", "--seed", default = 0, type = int, help = "Random number generator seed")
@@ -100,6 +101,11 @@ def main():
     writeCmsRunConfig(commonStrConfig, seed, cfgType = "MINIAOD")
 
     call("cmsRun {0}_MINIAOD_cfg.py -n {1}".format(commonStrConfig, nThreads), shell=True)
+
+    # Clean up redundant files
+    os.remove( "{0}_GS.root".format(commonStrConfig) )
+    for file in glob.glob( "{0}*DR*.root".format(commonStrConfig) ):
+        os.remove(file)
 
     # CURRENTLY I HAVE TO RUN THE SCRIPT TWICE TO MAKE SURE IT DOES THE CMSENV PROPERLY
 
@@ -248,12 +254,10 @@ def initialiseCMSSW(cmsswVersion, arch, work_space):
         call("scram p CMSSW_{0}".format(cmsswVersion), shell=True)
         os.chdir("..")
 
-    os.chdir( work_space + "/CMSSW_{0}/src".format(cmsswVersion) )
-    sourceCMSSW()
+    sourceCMSSW(cmsswVersion, work_space)
     print "Set up CMSSW_{0} environment".format(cmsswVersion) 
 
     # Compile and re-initialise environment
-    os.chdir( os.path.join( work_space, "CMSSW_{0}/src".format(cmsswVersion) ) )
     call("scram b", shell=True)
     sourceCMSSW(cmsswVersion, work_space)
 
@@ -264,7 +268,8 @@ def sourceCMSSW(cmsswVersion, work_space):
     """
 
     # Check I'm in the right directory
-    if not os.getcwd()
+    if os.getcwd() != os.path.join( work_space, "CMSSW_{0}/src".format(cmsswVersion) ):
+        os.chdir( os.path.join( work_space, "CMSSW_{0}/src".format(cmsswVersion) ) )
     
     envCommand = ["bash", "-c", "eval `scramv1 runtime -sh` && env"]
     proc = Popen(envCommand, stdout = PIPE)

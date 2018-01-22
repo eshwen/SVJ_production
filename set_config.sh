@@ -214,8 +214,6 @@ if [ ! -z $nThreads ]; then
   cmsRun $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_DR_cfg.py -n $nThreads
 fi
 
-#$work_space/output/$gridpack_name/${gridpack_name}_${seed}_DR_step1.root
-
 cmsDriver.py step1 --filein $work_space/output/$gridpack_name/file:${gridpack_name}_${seed}_DR.root --fileout $work_space/output/$gridpack_name/file:${gridpack_name}_${seed}_MINIAOD.root --mc --eventcontent MINIAODSIM --runUnscheduled --datatier MINIAODSIM --conditions 80X_mcRun2_asymptotic_2016_TrancheIV_v6 --step PAT -n $n_of_events --python_filename $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_MINIAOD_cfg.py --era Run2_2016 --no_exec
 
 head -n -8 $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_MINIAOD_cfg.py >  $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_MINIAOD_cfg_tmp.py
@@ -237,7 +235,6 @@ if [ ! -z $nThreads ]; then
   cmsRun $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_MINIAOD_cfg.py -n $nThreads
 fi
 
-rm $work_space/output/$gridpack_name/${gridpack_name}_${seed}_DR.root
-
+rm $work_space/output/$gridpack_name/${gridpack_name}_${seed}_DR*.root
 
 exit
