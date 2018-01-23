@@ -24,7 +24,7 @@ def main():
     
     work_space = os.path.abspath(args.workingDir)
     if not os.path.exists(work_space):
-        print "The directory you have specified: %s, does not exist. Creating now..." % (work_space)
+        print "The directory you have specified: {0}, does not exist. Creating now...".format(work_space)
         os.mkdir(work_space)
 
     alpha_D = args.alphaD
@@ -37,12 +37,13 @@ def main():
     # Define and create output directories if not already done so
     gridpack_name = "alphaD-" + str(alpha_D) + "_mZ-" + str(m_Z) + "_rinv-" + str(r_inv)
     gridpack_name = gridpack_name.replace('.','_')
-    gridpack_dir = os.path.join("Output", gridpack_name)
+
+    gridpack_dir = os.path.join(work_space, "Output", gridpack_name)
     py_script_dir = os.path.join(gridpack_dir, "cfg_py")
 
-    if not os.path.exists( os.path.join(work_space, py_script_dir) ):
+    if not os.path.exists(py_script_dir):
         print "Output directory in work space doesn't exist. Creating now..."
-        os.makedirs( os.path.join(work_space, py_script_dir ) )
+        os.makedirs(py_script_dir)
 
     # Initialise an instance of CMSSW for Pythia version required for GEN-SIM productiion
     initialiseCMSSW(cmsswVersion = "7_1_28", arch = "gcc481", work_space = work_space)
@@ -57,10 +58,10 @@ def main():
 
     call("echo $DBS_CLIENT_CONFIG", shell=True)
 
-    commonPyPrefix = "{0}/{1}/{2}_{3}".format(work_space, py_script_dir, gridpack_name, seed)
+    commonPyPrefix = "{0}/{2}_{3}".format(py_script_dir, gridpack_name, seed)
 
     # Run cmsDriver to create config file
-    call("cmsDriver.py {0}/{6}/{1}_GS-fragment.py --fileout {0}/{5}/file:{1}_{2}_GS.root \
+    call("cmsDriver.py {0}/{6}/{1}_GS-fragment.py --fileout {5}/file:{1}_{2}_GS.root \
         --mc --eventcontent RAWSIM --datatier GEN-SIM --conditions MCRUN2_71_V3::All \
         --beamspot Realistic50ns13TeVCollision --step GEN,SIM -n {3} --python_filename {4}_GS_cfg.py \
         --customise SLHCUpgradeSimulations/Configuration/postLS1Customs.customisePostLS1 --magField 38T_PostLS1 \
@@ -75,7 +76,7 @@ def main():
     # Initialise another version of CMSSW for Pythia version required for reco level generation
     initialiseCMSSW(cmsswVersion = "8_0_21", arch = "gcc530", work_space = work_space)
 
-    call("cmsDriver.py step1 --filein {0}/{5}/file:{1}_{2}_GS.root --fileout {0}/{5}/file:{1}_{2}_DR_step1.root \
+    call("cmsDriver.py step1 --filein {5}/file:{1}_{2}_GS.root --fileout {5}/file:{1}_{2}_DR_step1.root \
     --mc --eventcontent PREMIXRAW --datatier GEN-SIM-RAW --conditions 80X_mcRun2_asymptotic_2016_TrancheIV_v6 \
     --step DIGIPREMIX_S2,DATAMIX,L1,DIGI2RAW,HLT:@frozen2016 -n {3} \
     --python_filename {4}_DR_step1_cfg.py --datamix PreMix --no_exec \
@@ -83,14 +84,14 @@ def main():
 
     call("cmsRun {0}_DR_step1_cfg.py -n {1}".format(commonPyPrefix, nThreads), shell=True)
 
-    call("cmsDriver.py step2 --filein {0}/{5}/file:{1}_{2}_DR_step1.root --fileout {0}/{5}/file:{1}_{2}_DR.root \
+    call("cmsDriver.py step2 --filein {5}/file:{1}_{2}_DR_step1.root --fileout {5}/file:{1}_{2}_DR.root \
     --mc --eventcontent AODSIM --runUnscheduled --datatier AODSIM --conditions 80X_mcRun2_asymptotic_2016_TrancheIV_v6 \
     --step RAW2DIGI,RECO,EI -n {3} --python_filename {4}_DR_cfg.py --era Run2_2016 \
     --no_exec".format(work_space, gridpack_name, seed, nEvents, commonPyPrefix, gridpack_dir), shell=True)
 
     call("cmsRun {0}_DR_cfg.py -n {1}".format(commonPyPrefix, nThreads), shell=True)
 
-    call("cmsDriver.py step1 --filein {0}/{5}/file:{1}_{2}_DR.root --fileout {0}/{5}/file:{1}_{2}_MINIAOD.root \
+    call("cmsDriver.py step1 --filein {5}/file:{1}_{2}_DR.root --fileout {5}/file:{1}_{2}_MINIAOD.root \
     --mc --eventcontent MINIAODSIM --runUnscheduled --datatier MINIAODSIM --conditions 80X_mcRun2_asymptotic_2016_TrancheIV_v6 \
     --step PAT -n {3} --python_filename {4}_MINIAOD_cfg.py --era Run2_2016 \
     --no_exec".format(work_space, gridpack_name, seed, nEvents, commonPyPrefix, gridpack_dir), shell=True)
@@ -100,8 +101,8 @@ def main():
     call("cmsRun {0}_MINIAOD_cfg.py -n {1}".format(commonPyPrefix, nThreads), shell=True)
 
     # Clean up redundant files
-    os.remove( "{0}/{1}/{2}_{3}_GS.root".format(work_space, gridpack_dir, gridpack_name, seed) )
-    for file in glob.glob( "{0}/{1}/*DR*.root".format(work_space, gridpack_dir) ): os.remove(file)
+    os.remove( "{0}/{1}_{2}_GS.root".format(gridpack_dir, gridpack_name, seed) )
+    for file in glob.glob( "{0}/*DR*.root".format(gridpack_dir) ): os.remove(file)
 
     # CURRENTLY I HAVE TO RUN THE SCRIPT TWICE TO MAKE SURE IT DOES THE CMSENV PROPERLY
 
@@ -176,11 +177,11 @@ generator = cms.EDFilter(\"Pythia8GeneratorFilter\",
     print "GEN-SIM fragment config written."
 
 
-def writeCmsRunConfig(commonFilePath, seed, cfgType):
+def writeCmsRunConfig(pathPrefix, seed, cfgType):
     """
     Insert following code before last 8 lines of cmsRun config file
     """
-    configPath = "{0}_{1}_cfg.py".format(commonFilePath, cfgType)
+    configPath = "{0}_{1}_cfg.py".format(pathPrefix, cfgType)
     configFile = open(configPath, "r")
 
     fileLineList = configFile.readlines()
