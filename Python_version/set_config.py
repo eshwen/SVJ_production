@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 import argparse
 import glob
 import os
@@ -22,11 +22,10 @@ args = parser.parse_args()
 
 def main():
     
-    if not os.path.exists( os.path.abspath(args.workingDir) ):
-        print "The directory you have specified: %s, does not exist. Creating now..." % (os.path.abspath(args.workingDir))
-        os.mkdir( os.path.abspath(args.workingDir) )
-
     work_space = os.path.abspath(args.workingDir)
+    if not os.path.exists(work_space):
+        print "The directory you have specified: %s, does not exist. Creating now..." % (work_space)
+        os.mkdir(work_space)
 
     alpha_D = args.alphaD
     m_Z = args.mZ
@@ -38,7 +37,8 @@ def main():
     # Define and create output directories if not already done so
     gridpack_name = "alphaD-" + str(alpha_D) + "_mZ-" + str(m_Z) + "_rinv-" + str(r_inv)
     gridpack_name = gridpack_name.replace('.','_')
-    py_script_dir = "Output/" + gridpack_name + "/cfg_py/"
+    gridpack_dir = os.path.join("Output", gridpack_name)
+    py_script_dir = os.path.join(gridpack_dir, "cfg_py")
 
     if not os.path.exists( os.path.join(work_space, py_script_dir) ):
         print "Output directory in work space doesn't exist. Creating now..."
@@ -49,24 +49,22 @@ def main():
 
     cmssw7_output_path = "CMSSW_7_1_28/src/Configuration/GenProduction/python/"
 
-    if not os.path.exists( os.path.join(work_space, cmssw7_output_path)):
-        print "CMSSW output path doesn't exist. Creating now..."
+    if not os.path.exists( os.path.join(work_space, cmssw7_output_path) ):
+        print "CMSSW Python config path doesn't exist. Creating now..."
         os.makedirs( os.path.join(work_space, cmssw7_output_path) )
 
     writeGenSimConfig(gridpack_name, work_space, cmssw7_output_path, m_Z, alpha_D, r_inv)
 
-    #call("echo $DBS_CLIENT_CONFIG", shell=True)
+    call("echo $DBS_CLIENT_CONFIG", shell=True)
+
+    commonPyPrefix = "{0}/{1}/{2}_{3}".format(work_space, py_script_dir, gridpack_name, seed)
 
     # Run cmsDriver to create config file
-    call("cmsDriver.py Configuration/GenProduction/python/{0}_GS-fragment.py \
-        --fileout {1}/Output/{0}/file:{0}_{2}_GS.root --mc --eventcontent RAWSIM \
-        --datatier GEN-SIM --conditions MCRUN2_71_V3::All --beamspot Realistic50ns13TeVCollision \
-        --step GEN,SIM -n {3} --python_filename {1}/{4}/{0}_{2}_GS_cfg.py \
-        --customise SLHCUpgradeSimulations/Configuration/postLS1Customs.customisePostLS1 \
-        --magField 38T_PostLS1 --no_exec".format(gridpack_name, work_space, seed, nEvents, py_script_dir), shell=True)
-    
-    # SORT THIS OUT, AS ROOT FILES SHOULDN'T BE IN cfg_py/
-    commonPyPrefix = "{0}/{1}/{2}_{3}".format(work_space, py_script_dir, gridpack_name, seed)
+    call("cmsDriver.py {0}/{6}/{1}_GS-fragment.py --fileout {0}/{5}/file:{1}_{2}_GS.root \
+        --mc --eventcontent RAWSIM --datatier GEN-SIM --conditions MCRUN2_71_V3::All \
+        --beamspot Realistic50ns13TeVCollision --step GEN,SIM -n {3} --python_filename {4}_GS_cfg.py \
+        --customise SLHCUpgradeSimulations/Configuration/postLS1Customs.customisePostLS1 --magField 38T_PostLS1 \
+        --no_exec".format(work_space, gridpack_name, seed, nEvents, commonPyPrefix, gridpack_dir, cmssw7_output_path), shell=True)
 
     writeCmsRunConfig(commonPyPrefix, seed, cfgType = "GS")
     
@@ -77,33 +75,33 @@ def main():
     # Initialise another version of CMSSW for Pythia version required for reco level generation
     initialiseCMSSW(cmsswVersion = "8_0_21", arch = "gcc530", work_space = work_space)
 
-    call("cmsDriver.py step1 --filein {0}/Output/{1}/file:{1}_{2}_GS.root --fileout {0}/Output/{1}/file:{1}_{2}_DR_step1.root \
+    call("cmsDriver.py step1 --filein {0}/{5}/file:{1}_{2}_GS.root --fileout {0}/{5}/file:{1}_{2}_DR_step1.root \
     --mc --eventcontent PREMIXRAW --datatier GEN-SIM-RAW --conditions 80X_mcRun2_asymptotic_2016_TrancheIV_v6 \
     --step DIGIPREMIX_S2,DATAMIX,L1,DIGI2RAW,HLT:@frozen2016 -n {3} \
     --python_filename {4}_DR_step1_cfg.py --datamix PreMix --no_exec \
-    --pileup_input filelist:{0}/../../global/pileup_filelist.txt --era Run2_2016".format(work_space, gridpack_name, seed, nEvents, commonPyPrefix), shell=True)
+    --pileup_input filelist:{0}/../../global/pileup_filelist.txt --era Run2_2016".format(work_space, gridpack_name, seed, nEvents, commonPyPrefix, gridpack_dir), shell=True)
 
     call("cmsRun {0}_DR_step1_cfg.py -n {1}".format(commonPyPrefix, nThreads), shell=True)
 
-    call("cmsDriver.py step2 --filein {0}/Output/{1}/file:{1}_{2}_DR_step1.root --fileout {0}/Output/{1}/file:{1}_{2}_DR.root \
+    call("cmsDriver.py step2 --filein {0}/{5}/file:{1}_{2}_DR_step1.root --fileout {0}/{5}/file:{1}_{2}_DR.root \
     --mc --eventcontent AODSIM --runUnscheduled --datatier AODSIM --conditions 80X_mcRun2_asymptotic_2016_TrancheIV_v6 \
     --step RAW2DIGI,RECO,EI -n {3} --python_filename {4}_DR_cfg.py --era Run2_2016 \
-    --no_exec".format(work_space, gridpack_name, seed, nEvents, commonPyPrefix), shell=True)
+    --no_exec".format(work_space, gridpack_name, seed, nEvents, commonPyPrefix, gridpack_dir), shell=True)
 
     call("cmsRun {0}_DR_cfg.py -n {1}".format(commonPyPrefix, nThreads), shell=True)
 
-    call("cmsDriver.py step1 --filein {0}/Output/{1}/file:{1}_{2}_DR.root --fileout {0}/Output/{1}/file:{1}_{2}_MINIAOD.root \
+    call("cmsDriver.py step1 --filein {0}/{5}/file:{1}_{2}_DR.root --fileout {0}/{5}/file:{1}_{2}_MINIAOD.root \
     --mc --eventcontent MINIAODSIM --runUnscheduled --datatier MINIAODSIM --conditions 80X_mcRun2_asymptotic_2016_TrancheIV_v6 \
     --step PAT -n {3} --python_filename {4}_MINIAOD_cfg.py --era Run2_2016 \
-    --no_exec".format(work_space, gridpack_name, seed, nEvents, commonPyPrefix), shell=True)
+    --no_exec".format(work_space, gridpack_name, seed, nEvents, commonPyPrefix, gridpack_dir), shell=True)
 
     writeCmsRunConfig(commonPyPrefix, seed, cfgType = "MINIAOD")
 
     call("cmsRun {0}_MINIAOD_cfg.py -n {1}".format(commonPyPrefix, nThreads), shell=True)
 
     # Clean up redundant files
-    os.remove( "{0}/Output/{1}_{2}_GS.root".format(work_space, gridpack_name, seed) )
-    for file in glob.glob( "{0}/Output/*DR*.root".format(work_space) ): os.remove(file)
+    os.remove( "{0}/{1}/{2}_{3}_GS.root".format(work_space, gridpack_dir, gridpack_name, seed) )
+    for file in glob.glob( "{0}/{1}/*DR*.root".format(work_space, gridpack_dir) ): os.remove(file)
 
     # CURRENTLY I HAVE TO RUN THE SCRIPT TWICE TO MAKE SURE IT DOES THE CMSENV PROPERLY
 
@@ -113,11 +111,10 @@ def writeGenSimConfig(gridpack_name, work_space, cmssw7_output_path, m_Z, alpha_
     Write the Python config file for sample production with Pythia
     """
     
-    configPath = work_space + "/" + cmssw7_output_path + "/" + gridpack_name + "_GS-fragment.py"
+    configPath = os.path.join(work_space, cmssw7_output_path) + gridpack_name + "_GS-fragment.py"
     configFile = open(configPath, "w+")
 
-    configFile.write("""
-import FWCore.ParameterSet.Config as cms
+    configFile.write("""import FWCore.ParameterSet.Config as cms
 from Configuration.Generator.Pythia8CommonSettings_cfi import *
 from Configuration.Generator.Pythia8CUEP8M1Settings_cfi import *
 
@@ -164,7 +161,7 @@ generator = cms.EDFilter(\"Pythia8GeneratorFilter\",
             '4900111:addChannel = 1 {5} 91 1 -1',
             '4900113:oneChannel = 1 {4} 0 4900213 -4900213',
             '4900113:addChannel = 1 {5} 91 1 -1',
-            ),
+        ),
         parameterSets = cms.vstring(
             'pythia8CommonSettings',
             'pythia8CUEP8M1Settings',
@@ -190,8 +187,7 @@ def writeCmsRunConfig(commonFilePath, seed, cfgType):
     configFile.close()
 
     # Two blocks of code to add to different configs
-    gsCodeToAdd = """
-# reset all random numbers to ensure statistically distinct but reproducible jobs
+    gsCodeToAdd = """# reset all random numbers to ensure statistically distinct but reproducible jobs
 from IOMC.RandomEngine.RandomServiceHelper import RandomNumberServiceHelper
 randHelper = RandomNumberServiceHelper(process.RandomNumberGeneratorService)
 randHelper.resetSeeds({0})
@@ -214,8 +210,7 @@ if hasattr(process,'genJetParticles') and hasattr(process,'genParticlesForJetsNo
     ])
     """.format(seed)
 
-    miniaodCodeToAdd = """
-# miniAOD settings
+    miniaodCodeToAdd = """# miniAOD settings
 _pruned = [\"prunedGenParticles\"]
 for _prod in _pruned:
     if hasattr(process,_prod):
@@ -253,7 +248,7 @@ def initialiseCMSSW(cmsswVersion, arch, work_space):
         os.chdir("..")
 
     sourceCMSSW(cmsswVersion, work_space)
-    print "Set up CMSSW_{0} environment".format(cmsswVersion) 
+    print "Set up CMSSW_{0} environment.".format(cmsswVersion) 
 
     # Compile and re-initialise environment
     call("scram b", shell=True)
@@ -277,7 +272,9 @@ def sourceCMSSW(cmsswVersion, work_space):
         os.environ[key] = value
 
     proc.communicate()
+    print "ENV START ======================================================================"
     pprint.pprint(dict(os.environ))
+    print "ENV END ========================================================================"
 
 
 if __name__ == '__main__':
