@@ -12,6 +12,8 @@ The argument `EMAIL_ADDRESS` is optional.
 
 The default values for the important parameters (alpha\_D, r\_inv and m\_Z') are specified in run\_bunch\_batch.sh with underscores replacing decimals (i.e., 0\_1 = 0.1).
 
+A Python version of the sample generation is currently under development. For now, users should only use the bash scripts.
+
 ## Batch specifics
 
 The batch submission commands are slightly different for Zurich and IC, and very different for Bristol and lxplus. The script should be able to determine which site you're at. If an error message occurs, try `echo $HOSTNAME` and compare with the statements in the script.
