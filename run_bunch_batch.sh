@@ -80,12 +80,12 @@ done
 echo "
 #!/bin/bash
 # Hadd component miniAODs, then delete
-cd $work_space/CMSSW_7_1_28/src
+cd $work_space/CMSSW_8_0_21/src
 cmsenv
 cd $work_space/output/alphaD${alpha_D}_mZ${m_Z}_rinv${r_inv}
-hadd alphaD${alpha_D}_mZ${m_Z}_rinv${r_inv}_${seed}_MINIAOD_final.root *MINIAOD.root
+hadd alphaD${alpha_D}_mZ${m_Z}_rinv${r_inv}_MINIAOD_final.root *MINIAOD.root
 rm *MINIAOD.root
-cd -
+cd $work_space/../
 rm hadd_miniaods.sh
 " > ./hadd_miniaods.sh
 
