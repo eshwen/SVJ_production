@@ -28,10 +28,6 @@ alpha_D_mod="${alpha_D:0:1}.${alpha_D:2}"
 r_inv_mod="${r_inv:0:1}.${r_inv:2}"
 gridpack_name=alphaD${alpha_D}_mZ${m_Z}_rinv${r_inv}
 
-if [ ! -d $work_space ]; then
-  mkdir $work_space
-fi
-
 if [ ! -d $work_space/output ]; then
     mkdir $work_space/output
 fi
@@ -46,16 +42,9 @@ fi
 
 n_of_events=$2
 nThreads=$7
+
 source /cvmfs/cms.cern.ch/cmsset_default.sh
 export SCRAM_ARCH=slc6_amd64_gcc481
-if [ -r $work_space/CMSSW_7_1_28/src ] ; then
-  echo release CMSSW_7_1_28 already exists
-else
-  cd $work_space
-  scram p CMSSW_7_1_28
-  cd -
-fi
-
 cd $work_space/CMSSW_7_1_28/src
 eval `scram runtime -sh`
 
@@ -179,7 +168,6 @@ for _prod in _pruned:
 
 tail -n -8 $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_GS_cfg.py >>  $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_GS_cfg_tmp.py
 mv $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_GS_cfg_tmp.py $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_GS_cfg.py
-#rm $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_GS_cfg_tmp.py
 
 if [ ! -z $nThreads ]; then
   cmsRun $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_GS_cfg.py -n $nThreads
@@ -189,12 +177,6 @@ fi
 
 source /cvmfs/cms.cern.ch/cmsset_default.sh
 export SCRAM_ARCH=slc6_amd64_gcc530
-if [ -r $work_space/CMSSW_8_0_21/src ] ; then
- echo release CMSSW_8_0_21 already exists
-else
- cd $work_space
- scram p CMSSW_8_0_21
-fi
 cd $work_space/CMSSW_8_0_21/src
 eval `scram runtime -sh`
 scram b

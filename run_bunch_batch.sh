@@ -26,6 +26,29 @@ else
 fi
 
 work_space=$(readlink -m $1)
+if [ ! -d $work_space ]; then
+    mkdir $work_space
+fi
+
+# Set up CMSSW environments
+source /cvmfs/cms.cern.ch/cmsset_default.sh
+export SCRAM_ARCH=slc6_amd64_gcc481
+if [ -r $work_space/CMSSW_7_1_28/src ]; then
+    echo release CMSSW_7_1_28 already exists
+else
+    cd $work_space
+    scram p CMSSW_7_1_28
+fi
+
+export SCRAM_ARCH=slc6_amd64_gcc530
+if [ -r $work_space/CMSSW_8_0_21/src ]; then
+    echo release CMSSW_8_0_21 already exists
+else
+    cd $work_space
+    scram p CMSSW_8_0_21
+fi
+
+cd $work_space/../
 
 for alpha_D in 0_1; do # In set_config.sh, alpha_D and r_inv are split by 2nd character. So 0_1 = 0.1
     for m_Z in 3000; do
