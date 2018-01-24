@@ -33,3 +33,9 @@ voms-proxy-init --voms cms --valid 168:00
 which is valid for one week.
 
 At Imperial and Zurich, you can check on your jobs with `qstat`. At Bristol and lxplus, use `condor_q <user>`.
+
+Keep in mind the memory and disk requests when submitting the Condor jobs. They are designed to run lots of small jobs, rather than few large jobs. Try to keep the number of events per job < 10.
+
+## Miscellaneous
+
+Further reading to understand the theoretical motiviations of this search can be found at <https://arxiv.org/abs/1503.00009> and <https://arxiv.org/abs/1707.05326>.
