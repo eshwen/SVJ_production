@@ -8,9 +8,15 @@ To submit sample generation to batch, run
 ./run_bunch_batch.sh WORKING_DIRECTORY  NUMBER_OF_EVENTS  NUMBER_OF_SEEDS  NUMBER_OF_THREADS(to not execute cmsRun leave empty)  EMAIL_ADDRESS
 ```
 
-The argument `EMAIL_ADDRESS` is optional.
+The argument `EMAIL_ADDRESS` is optional. The default values for the important parameters (alpha\_D, r\_inv and m\_Z') are specified in run\_bunch\_batch.sh with underscores replacing decimals (i.e., 0\_1 = 0.1).
 
-The default values for the important parameters (alpha\_D, r\_inv and m\_Z') are specified in run\_bunch\_batch.sh with underscores replacing decimals (i.e., 0\_1 = 0.1).
+Once the jobs have finished, run
+
+```bash
+./hadd_miniaods.sh
+```
+
+to `hadd` all the component miniAOD files together and clean them up.
 
 A Python version of the sample generation is currently under development. For now, users should only use the bash scripts.
 

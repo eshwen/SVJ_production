@@ -58,19 +58,19 @@ def main():
 
     call("echo $DBS_CLIENT_CONFIG", shell=True)
 
-    commonPyPrefix = "{0}/{2}_{3}".format(py_script_dir, gridpack_name, seed)
+    commonPyCfgPrefix = "{0}/{2}_{3}".format(py_script_dir, gridpack_name, seed)
 
     # Run cmsDriver to create config file
     call("cmsDriver.py {0}/{6}/{1}_GS-fragment.py --fileout {5}/file:{1}_{2}_GS.root \
         --mc --eventcontent RAWSIM --datatier GEN-SIM --conditions MCRUN2_71_V3::All \
         --beamspot Realistic50ns13TeVCollision --step GEN,SIM -n {3} --python_filename {4}_GS_cfg.py \
         --customise SLHCUpgradeSimulations/Configuration/postLS1Customs.customisePostLS1 --magField 38T_PostLS1 \
-        --no_exec".format(work_space, gridpack_name, seed, nEvents, commonPyPrefix, gridpack_dir, cmssw7_output_path), shell=True)
+        --no_exec".format(work_space, gridpack_name, seed, nEvents, commonPyCfgPrefix, gridpack_dir, cmssw7_output_path), shell=True)
 
-    writeCmsRunConfig(commonPyPrefix, seed, cfgType = "GS")
+    writeCmsRunConfig(commonPyCfgPrefix, seed, cfgType = "GS")
     
     # Run cmsRun to make root files
-    call("cmsRun {0}_GS_cfg.py -n {1}".format(commonPyPrefix, nThreads), shell=True)
+    call("cmsRun {0}_GS_cfg.py -n {1}".format(commonPyCfgPrefix, nThreads), shell=True)
     print "Starting GEN-SIM production."
 
     # Initialise another version of CMSSW for Pythia version required for reco level generation
@@ -80,25 +80,25 @@ def main():
     --mc --eventcontent PREMIXRAW --datatier GEN-SIM-RAW --conditions 80X_mcRun2_asymptotic_2016_TrancheIV_v6 \
     --step DIGIPREMIX_S2,DATAMIX,L1,DIGI2RAW,HLT:@frozen2016 -n {3} \
     --python_filename {4}_DR_step1_cfg.py --datamix PreMix --no_exec \
-    --pileup_input filelist:{0}/../../global/pileup_filelist.txt --era Run2_2016".format(work_space, gridpack_name, seed, nEvents, commonPyPrefix, gridpack_dir), shell=True)
+    --pileup_input filelist:{0}/../../global/pileup_filelist.txt --era Run2_2016".format(work_space, gridpack_name, seed, nEvents, commonPyCfgPrefix, gridpack_dir), shell=True)
 
-    call("cmsRun {0}_DR_step1_cfg.py -n {1}".format(commonPyPrefix, nThreads), shell=True)
+    call("cmsRun {0}_DR_step1_cfg.py -n {1}".format(commonPyCfgPrefix, nThreads), shell=True)
 
     call("cmsDriver.py step2 --filein {5}/file:{1}_{2}_DR_step1.root --fileout {5}/file:{1}_{2}_DR.root \
     --mc --eventcontent AODSIM --runUnscheduled --datatier AODSIM --conditions 80X_mcRun2_asymptotic_2016_TrancheIV_v6 \
     --step RAW2DIGI,RECO,EI -n {3} --python_filename {4}_DR_cfg.py --era Run2_2016 \
-    --no_exec".format(work_space, gridpack_name, seed, nEvents, commonPyPrefix, gridpack_dir), shell=True)
+    --no_exec".format(work_space, gridpack_name, seed, nEvents, commonPyCfgPrefix, gridpack_dir), shell=True)
 
-    call("cmsRun {0}_DR_cfg.py -n {1}".format(commonPyPrefix, nThreads), shell=True)
+    call("cmsRun {0}_DR_cfg.py -n {1}".format(commonPyCfgPrefix, nThreads), shell=True)
 
     call("cmsDriver.py step1 --filein {5}/file:{1}_{2}_DR.root --fileout {5}/file:{1}_{2}_MINIAOD.root \
     --mc --eventcontent MINIAODSIM --runUnscheduled --datatier MINIAODSIM --conditions 80X_mcRun2_asymptotic_2016_TrancheIV_v6 \
     --step PAT -n {3} --python_filename {4}_MINIAOD_cfg.py --era Run2_2016 \
-    --no_exec".format(work_space, gridpack_name, seed, nEvents, commonPyPrefix, gridpack_dir), shell=True)
+    --no_exec".format(work_space, gridpack_name, seed, nEvents, commonPyCfgPrefix, gridpack_dir), shell=True)
 
-    writeCmsRunConfig(commonPyPrefix, seed, cfgType = "MINIAOD")
+    writeCmsRunConfig(commonPyCfgPrefix, seed, cfgType = "MINIAOD")
 
-    call("cmsRun {0}_MINIAOD_cfg.py -n {1}".format(commonPyPrefix, nThreads), shell=True)
+    call("cmsRun {0}_MINIAOD_cfg.py -n {1}".format(commonPyCfgPrefix, nThreads), shell=True)
 
     # Clean up redundant files
     os.remove( "{0}/{1}_{2}_GS.root".format(gridpack_dir, gridpack_name, seed) )
