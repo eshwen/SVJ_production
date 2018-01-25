@@ -109,9 +109,9 @@ cd $work_space/output/alphaD${alpha_D}_mZ${m_Z}_rinv${r_inv}
 hadd alphaD${alpha_D}_mZ${m_Z}_rinv${r_inv}_MINIAOD_final.root *MINIAOD.root
 rm *MINIAOD.root
 cd $work_space/../
-rm hadd_miniaods.sh
-" > ./hadd_miniaods.sh
+rm hadd_miniAODs.sh
+" > ./hadd_miniAODs.sh
 
-chmod +x hadd_miniaods.sh
+chmod +x hadd_miniAODs.sh
    
 exit

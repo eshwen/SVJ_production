@@ -13,7 +13,7 @@ The argument `EMAIL_ADDRESS` is optional. The default values for the important p
 Once the jobs have finished, run
 
 ```bash
-./hadd_miniaods.sh
+./hadd_miniAODs.sh
 ```
 
 to `hadd` all the component miniAOD files together and clean them up.
@@ -46,5 +46,6 @@ Further reading to understand the theoretical motiviations of this search can be
 ## Features to add/bugs to fix
 
 - The number of jobs succeeding in a round of submission is quite low. Need to fix that.
-- Fix Python environment issues. Need to be able to `cmsenv`, and run `cmsDriver.py and `cmsRun`.
+- Fix Python environment issues. Need to be able to `cmsenv`, and run `cmsDriver.py` and `cmsRun`.
 - Finish writing Python version of scripts and tidy up.
+- Sometimes there are issues when hadding the component miniAODs. Need to fix that.
