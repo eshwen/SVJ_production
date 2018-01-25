@@ -40,7 +40,7 @@ Keep in mind the memory and disk requests when submitting the Condor jobs. They 
 
 ## Miscellaneous
 
-Further reading to understand the theoretical motiviations of this search can be found at <https://arxiv.org/abs/1503.00009> and <https://arxiv.org/abs/1707.05326>.
+Further reading to understand the theoretical motiviations of this search can be found at [![arXiv](https://img.shields.io/badge/arXiv-1707.05326%20-green.svg)](https://arxiv.org/abs/1503.00009) and [![arXiv](https://img.shields.io/badge/arXiv-1707.05326%20-green.svg)](https://arxiv.org/abs/1707.05326).
 
 
 ## Features to add/bugs to fix
