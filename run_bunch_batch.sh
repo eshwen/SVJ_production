@@ -65,8 +65,7 @@ for alpha_D in 0_1; do # In set_config.sh, alpha_D and r_inv are split by 2nd ch
 		if [ ! -z $n_of_threads ]; then
 
 		    if [[ "$HOSTNAME" == "soolin"* ]] || [[ "$HOSTNAME" == "lxplus"* ]]; then
-			echo "
-			# HTCondor submission script
+			echo "# HTCondor submission script
 			Universe = vanilla
 			cmd = $work_space/run_scripts/run_batch_alphaD${alpha_D}_mZ${m_Z}_rinv${r_inv}_${seed}.sh
 			#use_x509userproxy = true
@@ -100,8 +99,7 @@ for alpha_D in 0_1; do # In set_config.sh, alpha_D and r_inv are split by 2nd ch
     done
 done
 	       
-echo "
-#!/bin/bash
+echo "#!/bin/bash
 # Hadd component miniAODs, then delete
 cd $work_space/CMSSW_8_0_21/src
 cmsenv

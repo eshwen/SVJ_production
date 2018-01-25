@@ -1,5 +1,7 @@
 # SVJ_production
 
+This repository contains code for generating samples containing semi-visible jets. The generation is currently done in Pythia, and will likely be ported to MadGraph in the future.
+
 Sample generation can be run on a batch system (currently Zurich, Imperial College London, Bristol and lxplus are supported).
 
 To submit sample generation to batch, run
@@ -49,3 +51,4 @@ Further reading to understand the theoretical motiviations of this search can be
 - Fix Python environment issues. Need to be able to `cmsenv`, and run `cmsDriver.py` and `cmsRun`.
 - Finish writing Python version of scripts and tidy up.
 - Sometimes there are issues when hadding the component miniAODs. Need to fix that.
+- Port hard scatter/matrix element calculations to MadGraph, and then shower with Pythia.

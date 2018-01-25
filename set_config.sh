@@ -7,15 +7,6 @@ Usage: ./set_config.sh  WORKING_DIRECTORY  NUMBER_OF_EVENTS ALPHA_D M_Z R_INV SE
   exit
 fi
 
-if [ ! -d $1 ]; then
-  if [ -d $(dirname $1) ]; then
-    mkdir $1
-  else
-    echo "There is no path to $(dirname $1)!"
-    exit
-  fi
-fi
-
 work_space=$(readlink -m $1)
 
 alpha_D=$3
