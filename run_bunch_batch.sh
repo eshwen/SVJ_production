@@ -104,7 +104,7 @@ echo "#!/bin/bash
 cd $work_space/CMSSW_8_0_21/src
 cmsenv
 cd $work_space/output/alphaD${alpha_D}_mZ${m_Z}_rinv${r_inv}
-hadd alphaD${alpha_D}_mZ${m_Z}_rinv${r_inv}_MINIAOD_final.root *MINIAOD.root
+hadd -k alphaD${alpha_D}_mZ${m_Z}_rinv${r_inv}_MINIAOD_final.root *MINIAOD.root
 rm *MINIAOD.root
 cd $work_space/../
 rm hadd_miniAODs.sh
