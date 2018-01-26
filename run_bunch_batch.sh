@@ -25,6 +25,7 @@ else
 fi
 
 work_space=$(readlink -m $1)
+
 if [ ! -d $work_space ]; then
     mkdir $work_space
 fi
