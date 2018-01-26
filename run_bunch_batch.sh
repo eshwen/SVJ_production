@@ -1,10 +1,10 @@
 #!/bin/bash
 
 if [ -z $1 ]; then
-  echo "--------------------------------------------------------------------------------------------------------------------------------------
+    echo "----------------------------------------------------------------------------------------------------------------------------------------
 Usage: ./run_bunch_batch.sh WORKING_DIRECTORY  NUMBER_OF_EVENTS  NUMBER_OF_SEEDS  NUMBER_OF_THREADS(to not execute cmsRun leave empty)
 --------------------------------------------------------------------------------------------------------------------------------------"
-  exit
+    exit
 fi
 
 init_ind=4
@@ -62,11 +62,10 @@ for alpha_D in 0_1; do # In set_config.sh, alpha_D and r_inv are split by 2nd ch
 		fi
 
 		if [ ! -z $n_of_threads ]; then
-
 		    if [[ "$HOSTNAME" == "soolin"* ]] || [[ "$HOSTNAME" == "lxplus"* ]]; then
 			echo "# HTCondor submission script
 			Universe = vanilla
-			cmd = $work_space/run_scripts/run_batch_alphaD${alpha_D}_mZ${m_Z}_rinv${r_inv}_${seed}.sh
+			executable = $work_space/run_scripts/run_batch_alphaD${alpha_D}_mZ${m_Z}_rinv${r_inv}_${seed}.sh
 			use_x509userproxy = true
 			Log        = $work_space/logs/condor_job_${seed}.log
 			Output     = $work_space/logs/condor_job_${seed}.out
@@ -75,8 +74,8 @@ for alpha_D in 0_1; do # In set_config.sh, alpha_D and r_inv are split by 2nd ch
 			when_to_transfer_output = ON_EXIT_OR_EVICT
 			# Resource requests (disk storage in kB, memory in MB)
 			request_cpus = 1
-			request_disk = 10000000
-			request_memory = 2000
+			request_disk = 1000000
+			request_memory = 2500
                         +MaxRuntime = 7200
 			# Number of instances of job to run
 			queue 1
