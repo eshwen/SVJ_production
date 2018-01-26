@@ -1,9 +1,9 @@
 #!/bin/bash
 
 if [ -z $1 ]; then
-  echo "----------------------------------------------------------------------------------------------------------------------------------------------------
-Usage: ./run_bunch_batch.sh WORKING_DIRECTORY  NUMBER_OF_EVENTS  NUMBER_OF_SEEDS  NUMBER_OF_THREADS(to not execute cmsRun leave empty)  EMAIL_ADDRESS
-----------------------------------------------------------------------------------------------------------------------------------------------------"
+  echo "--------------------------------------------------------------------------------------------------------------------------------------
+Usage: ./run_bunch_batch.sh WORKING_DIRECTORY  NUMBER_OF_EVENTS  NUMBER_OF_SEEDS  NUMBER_OF_THREADS(to not execute cmsRun leave empty)
+--------------------------------------------------------------------------------------------------------------------------------------"
   exit
 fi
 
@@ -12,7 +12,6 @@ num_ind=1
 n_of_events=$2 # number of events per job
 n_of_threads=$4
 n_of_seeds=$3 # = number of jobs
-MAIL=$5
 
 if [[ "$HOSTNAME" == *"ic.ac.uk" ]]; then
     queue=hep.q
@@ -86,11 +85,7 @@ for alpha_D in 0_1; do # In set_config.sh, alpha_D and r_inv are split by 2nd ch
 			condor_submit $work_space/run_scripts/condor_submission_${seed}.job
 			
 		    else
-		    	if [ -z $MAIL ]; then
-			    qsub -N job_alphaD${alpha_D}_mZ${m_Z}_rinv${r_inv}_${seed} -o logs/ -e logs/ -q $queue -cwd $work_space/run_scripts/run_batch_alphaD${alpha_D}_mZ${m_Z}_rinv${r_inv}_${seed}.sh
-		    	else
-			    qsub -N job_alphaD${alpha_D}_mZ${m_Z}_rinv${r_inv}_${seed} -o logs/ -e logs/ -q $queue -cwd -m ae -M $MAIL $work_space/run_scripts/run_batch_alphaD${alpha_D}_mZ${m_Z}_rinv${r_inv}_${seed}.sh
-		    	fi
+			qsub -N job_alphaD${alpha_D}_mZ${m_Z}_rinv${r_inv}_${seed} -o logs/ -e logs/ -q $queue -cwd $work_space/run_scripts/run_batch_alphaD${alpha_D}_mZ${m_Z}_rinv${r_inv}_${seed}.sh
 		    fi
 
 		fi

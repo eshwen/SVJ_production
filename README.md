@@ -2,17 +2,13 @@
 
 This repository contains code for generating samples containing semi-visible jets. The generation is currently done in Pythia, and will likely be ported to MadGraph in the future.
 
-Sample generation can be run on a batch system (currently Zurich, Imperial College London, Bristol and lxplus are supported).
-
-To submit sample generation to batch, run
+Sample generation can be run on a batch system (currently Zurich, Imperial College London, Bristol and lxplus are supported). To submit sample generation to batch, run
 
 ```bash
 ./run_bunch_batch.sh  WORKING_DIRECTORY(relative to cwd)  NUMBER_OF_EVENTS  NUMBER_OF_SEEDS  NUMBER_OF_THREADS(to not execute cmsRun leave empty)  EMAIL_ADDRESS
 ```
 
-The argument `EMAIL_ADDRESS` is optional. The default values for the important parameters (alpha\_D, r\_inv and m\_Z') are specified in run\_bunch\_batch.sh with underscores replacing decimals (i.e., 0\_1 = 0.1).
-
-Once the jobs have finished, run
+The default values for the important parameters (alpha\_D, r\_inv and m\_Z') are specified in run\_bunch\_batch.sh with underscores replacing decimals (i.e., 0\_1 = 0.1). Once the jobs have finished, run
 
 ```bash
 ./hadd_miniAODs.sh
@@ -52,3 +48,4 @@ Further reading to understand the theoretical motiviations of this search can be
 - Finish writing Python version of scripts and tidy up.
 - Sometimes there are issues when hadding the component miniAODs. Need to fix that.
 - Port hard scatter/matrix element calculations to MadGraph, and then shower with Pythia.
+- At Imperial, need to source CMSSW in /vols/build/ as ownership isn't preserved for CMSSW files when done in /home/hep/.
