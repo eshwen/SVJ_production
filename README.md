@@ -49,3 +49,4 @@ Further reading to understand the theoretical motiviations of this search can be
 - Finish writing Python version of scripts and tidy up.
 - Sometimes there are issues when hadding the component miniAODs. Need to fix that.
 - Port hard scatter/matrix element calculations to MadGraph, and then shower with Pythia.
+- Think about adding CRAB support. Would be able to submit easily from different machines, and can monitor/resubmit jobs easily.
