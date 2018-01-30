@@ -43,7 +43,8 @@ Further reading to understand the theoretical motiviations of this search can be
 
 ## Features to add/bugs to fix
 
-- The number of jobs succeeding in a round of submission is quite low. Need to fix that.
+- Fix batch submission at Bristol. Need to store software on /software/, but submit jobs from /storage/.
+- Fix batch submission at Imperial (currently jobs stay in "Eqw" state).
 - Fix Python environment issues. Need to be able to `cmsenv`, and run `cmsDriver.py` and `cmsRun`.
 - Finish writing Python version of scripts and tidy up.
 - Sometimes there are issues when hadding the component miniAODs. Need to fix that.
