@@ -77,18 +77,7 @@ for alpha_D in 0_1; do # In set_config.sh, alpha_D and r_inv are split by 2nd ch
 	done
     done
 done
-	       
-echo "#!/bin/bash
-# Hadd component miniAODs, then delete
-cd $work_space/CMSSW_8_0_21/src
-cmsenv
-cd $work_space/output/alphaD${alpha_D}_mZ${m_Z}_rinv${r_inv}
-hadd -k alphaD${alpha_D}_mZ${m_Z}_rinv${r_inv}_MINIAOD_final.root *MINIAOD.root
-rm *MINIAOD.root
-cd $work_space/../
-rm hadd_miniAODs.sh
-" > ./hadd_miniAODs.sh
 
-chmod +x hadd_miniAODs.sh
+$PWD/global/write_hadding_script.sh $work_space $alpha_D $m_Z $r_inv
    
 exit

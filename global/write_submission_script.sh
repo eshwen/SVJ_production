@@ -22,8 +22,7 @@ if [[ "$HOSTNAME" == "soolin"* ]]; then
     echo "use_x509userproxy = true" >> $work_space/run_scripts/condor_submission_${seed}.job
 fi
 
-echo "
-# Resource requests (disk storage in kB, memory in MB)
+echo "# Resource requests (disk storage in kB, memory in MB)
 request_cpus = 1
 request_disk = 1000000
 request_memory = 2500
