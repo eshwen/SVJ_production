@@ -8,7 +8,7 @@ r_inv=$4
 echo "#!/bin/bash
 # Hadd component miniAODs, then delete
 cd $work_space/CMSSW_8_0_21/src
-cmsenv
+eval `scramv1 runtime -sh`
 cd $work_space/output/alphaD${alpha_D}_mZ${m_Z}_rinv${r_inv}
 hadd -k alphaD${alpha_D}_mZ${m_Z}_rinv${r_inv}_MINIAOD_final.root *MINIAOD.root
 rm *MINIAOD.root
