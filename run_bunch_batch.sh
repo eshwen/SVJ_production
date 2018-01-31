@@ -68,10 +68,8 @@ for alpha_D in 0_1; do # In set_config.sh, alpha_D and r_inv are split by 2nd ch
 			$PWD/global/write_submission_script.sh $work_space $alpha_D $m_Z $r_inv $seed
 			condor_submit $work_space/run_scripts/condor_submission_${seed}.job
 			
-		    elif [[ "$HOSTNAME" == *"uzh"* ]]; then
-			qsub -N job_alphaD${alpha_D}_mZ${m_Z}_rinv${r_inv}_${seed} -o logs/ -e logs/ -q $queue -cwd $work_space/run_scripts/run_batch_alphaD${alpha_D}_mZ${m_Z}_rinv${r_inv}_${seed}.sh
-		    elif [[ "$HOSTNAME" == *"ic.ac.uk" ]]; then
-			 qsub -N job_alphaD${alpha_D}_mZ${m_Z}_rinv${r_inv}_${seed} -o /dev/null -e /dev/null -q $queue -cwd $work_space/run_scripts/run_batch_alphaD${alpha_D}_mZ${m_Z}_rinv${r_inv}_${seed}.sh
+		    elif [[ "$HOSTNAME" == *"uzh"* ]] || [[ "$HOSTNAME" == *"ic.ac.uk" ]]; then
+			qsub -N job_alphaD${alpha_D}_mZ${m_Z}_rinv${r_inv}_${seed} -o $work_space/logs/ -e $work_space/logs/ -q $queue -cwd $work_space/run_scripts/run_batch_alphaD${alpha_D}_mZ${m_Z}_rinv${r_inv}_${seed}.sh
 		    fi
 
 		fi
