@@ -9,22 +9,23 @@ fi
 
 init_ind=4
 num_ind=1
+work_space=$(readlink -m $1)
 n_of_events=$2 # number of events per job
-n_of_threads=$4
 n_of_seeds=$3 # = number of jobs
+n_of_threads=$4
 
 if [[ "$HOSTNAME" == *"ic.ac.uk" ]]; then
     queue=hep.q
 elif [[ "$HOSTNAME" == *"uzh"* ]]; then
     queue=long.q
 elif [[ "$HOSTNAME" = "soolin"* ]] || [[ "$HOSTNAME" = "lxplus"* ]]; then
-    echo Running on $HOSTNAME.
+    :
 else
     echo Sorry, the remote server at $HOSTNAME is not supported at this time.
     exit
 fi
 
-work_space=$(readlink -m $1)
+echo Running on $HOSTNAME.
 
 if [ ! -d $work_space ]; then
     mkdir $work_space
