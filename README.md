@@ -44,9 +44,9 @@ Further reading to understand the theoretical motiviations of this search can be
 ## Features to add/bugs to fix
 
 - Fix batch submission at Bristol. Need to store software on /software/, but submit jobs from /storage/.
-- Fix batch submission at Imperial (currently jobs stay in "Eqw" state).
 - Fix Python environment issues. Need to be able to `cmsenv`, and run `cmsDriver.py` and `cmsRun`.
 - Finish writing Python version of scripts and tidy up.
 - Sometimes there are issues when hadding the component miniAODs. Need to fix that.
 - Port hard scatter/matrix element calculations to MadGraph, and then shower with Pythia.
 - Think about adding CRAB support. Would be able to submit easily from different machines, and can monitor/resubmit jobs easily.
+- Once issues are fixed and MadGraph support has been added, can request central production.
