@@ -2,18 +2,19 @@
 
 if [ -z $1 ]; then
   echo "-----------------------------------------------------------------------------------------------------------------------------
-Usage: ./set_config.sh  WORKING_DIRECTORY  NUMBER_OF_EVENTS ALPHA_D M_Z R_INV SEED NUMBER_OF_THREADS(to not execute cmsRun leave empty)
+Usage: ./set_config.sh  WORKING_DIRECTORY  NUMBER_OF_EVENTS ALPHA_D M_Z R_INV SEED NUMBER_OF_THREADS(to not execute cmsRun leave empty) SUBMISSION_DIR
 -----------------------------------------------------------------------------------------------------------------------------"
   exit
 fi
 
 work_space=$(readlink -m $1)
-
+n_of_events=$2
 alpha_D=$3
 m_Z=$4
 r_inv=$5
-
 seed=$6
+nThreads=$7
+submission_dir=$8
 
 alpha_D_mod="${alpha_D:0:1}.${alpha_D:2}"
 r_inv_mod="${r_inv:0:1}.${r_inv:2}"
@@ -30,9 +31,6 @@ fi
 if [ ! -d $work_space/output/$gridpack_name/cfg_py ]; then
   mkdir $work_space/output/$gridpack_name/cfg_py/
 fi
-
-n_of_events=$2
-nThreads=$7
 
 source /cvmfs/cms.cern.ch/cmsset_default.sh
 export SCRAM_ARCH=slc6_amd64_gcc481
@@ -173,7 +171,7 @@ eval `scram runtime -sh`
 scram b
 cd -
 
-cmsDriver.py step1 --filein $work_space/output/$gridpack_name/file:${gridpack_name}_${seed}_GS.root --fileout $work_space/output/$gridpack_name/${gridpack_name}_${seed}_DR_step1.root --mc --eventcontent PREMIXRAW --datatier GEN-SIM-RAW --conditions 80X_mcRun2_asymptotic_2016_TrancheIV_v6 --step DIGIPREMIX_S2,DATAMIX,L1,DIGI2RAW,HLT:@frozen2016 -n $n_of_events --python_filename $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_DR_step1_cfg.py --era Run2_2016 --datamix PreMix --no_exec --pileup_input filelist:${work_space}/../global/pileup_filelist.txt
+cmsDriver.py step1 --filein $work_space/output/$gridpack_name/file:${gridpack_name}_${seed}_GS.root --fileout $work_space/output/$gridpack_name/${gridpack_name}_${seed}_DR_step1.root --mc --eventcontent PREMIXRAW --datatier GEN-SIM-RAW --conditions 80X_mcRun2_asymptotic_2016_TrancheIV_v6 --step DIGIPREMIX_S2,DATAMIX,L1,DIGI2RAW,HLT:@frozen2016 -n $n_of_events --python_filename $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_DR_step1_cfg.py --era Run2_2016 --datamix PreMix --no_exec --pileup_input filelist:${submission_dir}/global/pileup_filelist.txt
 
 if [ ! -z $nThreads ]; then
   cmsRun $work_space/output/$gridpack_name/cfg_py/${gridpack_name}_${seed}_DR_step1_cfg.py -n $nThreads

@@ -18,7 +18,7 @@ should_transfer_files   = YES
 when_to_transfer_output = ON_EXIT_OR_EVICT
 " > $work_space/run_scripts/condor_submission_${seed}.job
 
-if [[ "$HOSTNAME" == "soolin"* ]]; then                                                                             
+if [[ "$HOSTNAME" == "soolin"* ]]; then          
     echo "use_x509userproxy = true" >> $work_space/run_scripts/condor_submission_${seed}.job
 fi
 
@@ -26,7 +26,7 @@ echo "# Resource requests (disk storage in kB, memory in MB)
 request_cpus = 1
 request_disk = 1000000
 request_memory = 2500
-+MaxRuntime = 7200
++MaxRuntime = 14400
 # Number of instances of job to run
 queue 1
 " >> $work_space/run_scripts/condor_submission_${seed}.job
