@@ -81,6 +81,6 @@ for alpha_D in 0_1; do # In set_config.sh, alpha_D and r_inv are split by 2nd ch
     done
 done
 
-$submission_dir/global/write_hadding_script.sh $work_space $alpha_D $m_Z $r_inv
+$submission_dir/global/write_combine_script.sh $work_space $alpha_D $m_Z $r_inv
    
 exit
